@@ -88,7 +88,7 @@ export default {
     const tam = (t) => (t < 5.4 ? 1 : t < 6.0 ? lerp(1, 0.3, seg(t, 5.4, 6.0)) : t < 10.4 ? TAM : lerp(TAM, 0.2, seg(t, 10.4, 11)));
 
     // lo que se enciende: la funda del cable por donde baja, el parche de la antena, el conector, los LED y las aletas
-    const geoLuz = new THREE.TubeGeometry(cable, 200, 0.075, 8);
+    const geoLuz = new THREE.TubeGeometry(cable, planta.coax.tramos, 0.065, 8);       // (con los tramos del cable: con menos, en las curvas cerradas atajaba y se salía de él)
     grupo.add(new THREE.Mesh(geoLuz, new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, 0.4, 0.1), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false })));
     const conectorM = lector.conectores[0].material; conectorM.emissive = new THREE.Color(0xff5a1a);
 

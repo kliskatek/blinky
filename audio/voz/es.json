@@ -8,8 +8,8 @@
 {
 "t": 11.8,
 "f": "02.mp3",
-"d": 5.47,
-"x": "«Kliska», en euskera, es un parpadeo. Soy una partícula de energía."
+"d": 8.45,
+"x": "«Kliska», en euskera, es un parpadeo; en inglés, «blink». ¡De ahí mi nombre! Soy una partícula de energía."
 },
 {
 "t": 14.2,
@@ -230,7 +230,7 @@
 {
 "t": 175.79,
 "f": "39.mp3",
-"d": 9.38,
+"d": 9.24,
 "x": "El edge me ha puesto nombre y hora, me ha empaquetado con los datos del PLC y me ha convertido en un mensaje MQTT. ¡Nunca había tenido esta forma!"
 },
 {

@@ -225,7 +225,35 @@ if (Number.isNaN(enHash)) { sonido.mudo(true); corriendo = true; mostrarMando();
 else { ir(enHash, false); document.getElementById('cartela').hidden = true; if (/sigue/.test(location.hash)) corriendo = true; }
 pintarSonido(); pintarMando();
 
-window.corto = { ir: (s) => ir(s, false), ver: (s) => { ir(s, false); pintar(); }, seguir: () => { corriendo = true; pintarMando(); }, get t() { return t; }, TOTAL, montados, cam, electron, ren, escena, comp, sonido, guion, grabarMusica };
+// el corto en vídeo, para las redes (con corto/herramientas/video.py escuchando): cada cuadro, a su segundo de la
+// narración de este idioma, pintado entero (sin depender de lo que tarde) y mandado en crudo (RGBA, de abajo arriba; en
+// JPEG, el navegador tardaba casi un segundo por cuadro), en lotes, con un lote en camino mientras se pinta el siguiente;
+// antes, la mezcla de audio y los tiempos de las frases (para los subtítulos). Lo monta video.py
+async function grabarVideo({ fps = 30, ancho = 1920, alto = 1080, desde = 0, hasta = null, lote = 8, url = 'http://localhost:8795' } = {}) {
+  const { T, S, voz } = await sonido.exportar(), fin = hasta ?? S(TOTAL);
+  corriendo = false; pintarMando();
+  const S10 = Array.from({ length: Math.ceil(TOTAL * 10) + 1 }, (_, i) => +S(Math.min(TOTAL, i / 10)).toFixed(3));   // (para el tráiler: cada décima de la película, su segundo en el vídeo)
+  await fetch(`${url}/tiempos.json`, { method: 'POST', body: JSON.stringify({ voz, dura: S(TOTAL), S10 }) });
+  await fetch(`${url}/mezcla.wav`, { method: 'POST', body: await sonido.mezcla() });
+  ren.setPixelRatio(1); ren.setSize(ancho, alto, false); comp.setSize(ancho, alto); cam.aspect = ancho / alto;
+  const gl = ren.getContext(), tam = ancho * alto * 4;
+  await fetch(`${url}/empezar?fps=${fps}&w=${ancho}&h=${alto}`, { method: 'POST' });
+  const t0 = performance.now(), n0 = Math.round(desde * fps), n1 = Math.ceil(fin * fps);
+  let buf = new Uint8Array(tam * lote), k = 0, enCamino = Promise.resolve();
+  const mandar = async (datos, n) => { await enCamino; enCamino = fetch(`${url}/cuadro?n=${n}`, { method: 'POST', body: datos }); };
+  for (let n = n0; n < n1; n++) {
+    t = Math.min(TOTAL - 0.0005, T(n / fps)); pintar();
+    gl.readPixels(0, 0, ancho, alto, gl.RGBA, gl.UNSIGNED_BYTE, buf.subarray(k * tam, (k + 1) * tam));   // (en la misma tarea en que se pinta)
+    if (++k === lote || n === n1 - 1) { await mandar(buf.subarray(0, k * tam), n); buf = new Uint8Array(tam * lote); k = 0; }
+    if (n % 300 === 0) console.info(`vídeo: ${n} / ${n1} cuadros (${((performance.now() - t0) / 1000 / Math.max(1, n - n0 + 1) * (n1 - n)).toFixed(0)} s para acabar)`);
+  }
+  await enCamino;
+  await fetch(`${url}/fin`, { method: 'POST' });
+  medir();
+  return `${n1 - n0} cuadros en ${((performance.now() - t0) / 1000).toFixed(0)} s`;
+}
+
+window.corto = { ir: (s) => ir(s, false), ver: (s) => { ir(s, false); pintar(); }, seguir: () => { corriendo = true; pintarMando(); }, get t() { return t; }, TOTAL, montados, cam, electron, ren, escena, comp, sonido, guion, grabarMusica, grabarVideo };
 
 // para preparar el sonido (audio/guion.json): recorre el corto sin pintarlo y apunta cuándo empieza y acaba cada frase
 // (en español, con su hueco hasta la siguiente), los destellos del velo, los cambios de forma de Blinky y los tramos

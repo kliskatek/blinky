@@ -262,11 +262,13 @@ export function crearPlanta() {
   const guia = new THREE.CatmullRomCurve3([detras, V(detras.x, techo - 0.05, detras.z), V(px - 0.1, techo - 0.05, pz + 0.12),
     V(px, techo - 0.4, pz + 0.16), V(px, 0.15, pz + 0.16), V(px, suelo, pz + 0.3), V(px, suelo, espalda - 0.15),
     V(px - 0.15, suelo, espalda), V(bx + 0.12, suelo, espalda), V(bx, 0.12, espalda), V(bx, by - 0.06, espalda),
-    V(bx, by, espalda + 0.03), V(bx, by, az0 + 0.01), V(bx, by, A.z + 0.1),
-    V(puerto.x - 0.05, puerto.y - 0.1, puerto.z + 0.03), V(puerto.x, puerto.y - 0.03, puerto.z), puerto], false, 'centripetal');
+    V(bx, by, espalda + 0.03), V(bx, by, az0 + 0.02), V(bx, by - 0.06, az0 + 0.04),           // (por dentro de la canaleta, abajo)
+    V(bx + 0.02, by - 0.1, az0 + 0.045), V(bx + 0.06, by - 0.1, az0 + 0.05),                  // sale por su peine, hacia el lector
+    V(puerto.x - 0.04, by - 0.09, puerto.z - 0.005), V(puerto.x, puerto.y - 0.06, puerto.z), puerto], false, 'centripetal');
   // (en las esquinas del suelo la curva se pasaba y se metía en él: se remuestrea sin dejarla bajar de su radio)
   const coax = new THREE.CatmullRomCurve3(guia.getSpacedPoints(400).map((p) => p.setY(Math.max(p.y, suelo))), false, 'centripetal');
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(coax, 400, 0.005, 8), mat(0x1a1c1f, 0.1, 0.6)));
+  coax.tramos = Math.ceil(coax.getLength() / 0.01);                                             // (un tramo por centímetro: el plano 6 lo enciende con los mismos, encima)
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(coax, coax.tramos, 0.005, 8), mat(0x1a1c1f, 0.1, 0.6)));
   caja(0.03, 0.03, 0.025, mat(0x15171a, 0.2, 0.6), bx, by, az0 - 0.015);                       // su prensaestopas, en el fondo
   // en el pilar, el extintor con su señal; en la pared del fondo, la salida; y un palé de cajas esperando
   const extintor = new THREE.Group(); extintor.position.set(px, 0, pz + 0.16); g.add(extintor);

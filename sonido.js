@@ -171,6 +171,23 @@ export function crearSonido({ total, aviso }) {
       if (el && !el.seeking && Math.abs(el.currentTime - audioAhora()) > 0.3) el.currentTime = Math.min(audioAhora(), musica.dura - 0.01);
     },
     saltar() { if (ancla) parar(); },
+    // para el vídeo (corto.grabarVideo): el tiempo y cuándo suena cada frase en este idioma, y la mezcla entera (la
+    // música y la voz, con la música más baja mientras habla, como al reproducirlo)
+    async exportar() { await cargando; return { T: tiempo.T, S: tiempo.S, voz: voz.map((c) => ({ s: +c.s.toFixed(3), d: c.d })) }; },
+    async mezcla(sr = 48000) {
+      await cargando;
+      const oc = new OfflineAudioContext(2, Math.ceil((tiempo.S(total) + 0.5) * sr), sr);
+      const cargar = async (url) => oc.decodeAudioData(await fetch(url).then((r) => r.arrayBuffer()));
+      const gM = oc.createGain(); gM.connect(oc.destination); gM.gain.setValueAtTime(MUSICA, 0);
+      const gV = oc.createGain(); gV.connect(oc.destination);
+      const m = oc.createBufferSource(); m.buffer = await cargar(`audio/musica/${LANG}.mp3`); m.connect(gM); m.start(0);
+      for (const c of voz) {
+        const f = oc.createBufferSource(); f.buffer = await cargar(`audio/voz/${LANG}/${c.f}`); f.connect(gV); f.start(c.s);
+        gM.gain.setTargetAtTime(MUSICA * BAJA, Math.max(0, c.s - 0.15), 0.08);
+        gM.gain.setTargetAtTime(MUSICA, c.s + c.d + 0.1, 0.35);
+      }
+      return wav(await oc.startRendering());
+    },
     // el subtítulo del segundo t: el trozo de la frase que se dice entonces, si no se oye (en silencio, o hasta que el
     // navegador deja sonar el audio)
     subtitulo(t) {
