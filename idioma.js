@@ -1,11 +1,13 @@
-// El idioma del corto: es, en, eu o zh. Sale de ?lang= en la dirección o, si no, del último que se eligió; cambiarlo
+// El idioma del corto: es, en, eu o zh. Sale de ?lang= en la dirección o, si no, del último que se eligió o del navegador; cambiarlo
 // recarga la página en el mismo segundo, y sigue si se estaba reproduciendo (los rótulos se pintan en canvas al montar
 // cada plano).
 import TEXTOS from './textos.js';
 
 export const IDIOMAS = [['es', 'ES'], ['en', 'EN'], ['eu', 'EU'], ['zh', '中文']];
 const guardado = (() => { try { return localStorage.getItem('corto.lang'); } catch { return null; } })();
-const pedido = new URLSearchParams(location.search).get('lang') || guardado || 'es';
+// (si no, el del navegador: es, eu o zh; cualquier otro, inglés)
+const delNavegador = (navigator.languages || [navigator.language || 'es']).map((l) => l.slice(0, 2).toLowerCase()).find((l) => ['es', 'eu', 'zh', 'en'].includes(l)) || 'en';
+const pedido = new URLSearchParams(location.search).get('lang') || guardado || delNavegador;
 export const LANG = IDIOMAS.some(([c]) => c === pedido) ? pedido : 'es';
 
 // el texto en el idioma: la clave es el texto en español; si falta la traducción, se queda en español

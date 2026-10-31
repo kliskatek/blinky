@@ -101,5 +101,58 @@ export function crearArmario() {
     const o = new THREE.Mesh(new THREE.CircleGeometry(0.005, 16), new THREE.MeshBasicMaterial({ color: 0xD93030 })); o.position.set(0, 0.03, 0.0075); s.add(o);
   });
 
+  // el resto del cableado, el de verdad: alimentación (24 V: rojo y azul oscuro; 230 V: marrón, azul claro y la tierra,
+  // verde y amarilla), seguridad (naranja) y las señales de campo (gris y blanco), de cada aparato a las canaletas (la
+  // de abajo y la de arriba del armario) y, en mazos con sus bridas, de la de abajo a los prensaestopas del suelo. Más
+  // finos y mates que los de comunicación (el Ethernet azul, el coaxial y los de los sensores), para que esos se
+  // distingan
+  const azar = semilla(7);
+  const COL = { rojo: 0xa3271f, azulOsc: 0x1b2a55, marron: 0x5a3a22, azulCl: 0x4f86b8, gris: 0x6d7378, blanco: 0xd5d3cc, naranja: 0xc8641e, tierra: 0x6b9e3a };
+  const mats = {};
+  const hilo = (puntos, color, r = 0.0012) => {
+    const m = mats[color] || (mats[color] = mat(COL[color], 0.0, 0.75));
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(puntos), 24, r, 5), m));
+  };
+  const CANAL_ABAJO = 0.362, CANAL_ARRIBA = 0.72, ZC = 0.03;
+  // de un borne (x, y, z) a la canaleta de abajo o a la de arriba, con una curva
+  const aCanal = (x, y, z, color, arriba = false, dx = 0) => {
+    const yc = arriba ? CANAL_ARRIBA : CANAL_ABAJO, s = arriba ? 1 : -1;
+    hilo([new V3(x, y, z), new V3(x, y + s * 0.012, z + 0.004), new V3(x + dx * 0.5, (y + yc) / 2, (z + ZC) / 2 + 0.01), new V3(x + dx, yc + s * 0.004, ZC), new V3(x + dx, yc - s * 0.01, ZC)], color);
+  };
+  const alto = Y + 0.0625, bajo = Y - 0.0625;
+  // la fuente: 230 V abajo (fase, neutro, tierra) y 24 V arriba, a repartir
+  [['marron', -0.02], ['azulCl', 0], ['tierra', 0.02]].forEach(([c, dx]) => aCanal(mods.fuente.x + dx, bajo, ZF - 0.01, c, false, dx * 0.5));
+  [['rojo', -0.012], ['azulOsc', 0.012]].forEach(([c, dx]) => aCanal(mods.fuente.x + dx, alto, ZF - 0.01, c, true, dx));
+  // la CPU y los módulos: 24 V arriba; las entradas, abajo (además del cable del sensor)
+  for (const n of ['cpu', 'di', 'ai', 'iol']) {
+    const m = mods[n];
+    [['rojo', -0.008], ['azulOsc', 0.004]].forEach(([c, dx]) => aCanal(m.x + dx, alto, ZF - 0.012, c, true, dx * 2));
+    if (n !== 'cpu') for (let k = 1; k < 4; k++) aCanal(m.x - m.w * 0.3 + k * m.w * 0.2, Y - 0.05, ZF + 0.004, ['gris', 'blanco', 'naranja'][k - 1], false, (azar() - 0.5) * 0.02);
+  }
+  // las bornas de paso: arriba y abajo
+  for (let k = 0; k < 14; k++) {
+    const x = 0.37 + k * 0.0064, c = k === 13 ? 'tierra' : k % 4 === 3 ? 'azulOsc' : ['rojo', 'gris', 'naranja'][k % 3];
+    aCanal(x, 0.548, 0.05, c, true, (azar() - 0.5) * 0.03);
+    aCanal(x, 0.492, 0.05, k === 13 ? 'tierra' : ['marron', 'gris', 'blanco'][k % 3], false, (azar() - 0.5) * 0.03);
+  }
+  // el lector y el edge: su alimentación, de abajo a la canaleta
+  aCanal(-0.4, 0.432, 0.02, 'gris', false, 0.01); aCanal(-0.392, 0.432, 0.02, 'gris', false, 0.012);
+  aCanal(0.3, 0.452, 0.02, 'rojo', false, 0.01); aCanal(0.306, 0.452, 0.02, 'azulOsc', false, 0.012);
+  // los mazos, de la canaleta de abajo a los prensaestopas del suelo del armario, con sus bridas
+  const brida = mat(0xe8e6df, 0, 0.6);
+  for (const [x0, n] of [[-0.46, 7], [-0.36, 6], [0.5, 8]]) {
+    const colores = ['marron', 'azulCl', 'tierra', 'gris', 'blanco', 'naranja', 'rojo', 'azulOsc'];
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2, rx = 0.005 * Math.cos(a), rz = 0.005 * Math.sin(a), gira = (y) => 0.6 * y;
+      const p = (y, z) => new V3(x0 + rx * Math.cos(gira(y)) - rz * Math.sin(gira(y)), y, z + rx * Math.sin(gira(y)) + rz * Math.cos(gira(y)));
+      hilo([p(0.3, ZC), p(0.22, ZC + 0.01), p(0.1, ZC + 0.05), p(-0.02, 0.13), p(-0.1, 0.18), p(-0.13, 0.185)], colores[k % colores.length], 0.0013);
+    }
+    for (const [y, z] of [[0.24, ZC + 0.008], [0.12, ZC + 0.045], [0.0, 0.115]]) {
+      const b = new THREE.Mesh(new THREE.TorusGeometry(0.0075, 0.0012, 4, 12), brida); b.position.set(x0, y, z); b.rotation.x = Math.PI / 2 - 0.3; g.add(b);
+    }
+  }
+
   return { grupo: g, mods, leds, ledsCPU, puertos, escribir, sensores, Y, ZF };
 }
+// azar con semilla (el mismo cableado cada vez)
+function semilla(s) { return () => ((s = Math.imul(s ^ (s >>> 15), 2246822507) + 0x9e3779b9 >>> 0) / 4294967296); }

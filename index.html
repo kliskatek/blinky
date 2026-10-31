@@ -53,23 +53,19 @@
   .grupo button:hover { color: var(--tinta); }
   .grupo button.activo { background: rgba(0,128,255,.32); color: #fff; }
   #aviso { position: fixed; top: 52px; right: 16px; color: var(--suave); font-size: 12px; display: none; }
-  /* al llegar: elegir con sonido o sin él (ese toque es el que deja sonar el audio) */
-  #inicio { position: fixed; inset: 0; display: grid; place-content: center; gap: 18px; text-align: center;
-    background: radial-gradient(ellipse at center, rgba(7,9,13,.35), rgba(7,9,13,.82)); }
-  #inicio h1 { margin: 0 0 6px; font-size: clamp(32px, 5vw, 60px); font-weight: 600; letter-spacing: .02em; line-height: 1.05; }
-  #inicio h1 small { display: block; font-size: .42em; font-weight: 500; color: var(--naranja); letter-spacing: .12em; }
-  #inicio .botones { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  #inicio button { font: inherit; font-size: clamp(15px, 1.6vw, 19px); padding: 11px 22px; border-radius: 10px; cursor: pointer;
-    color: #fff; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.25); }
-  #inicio .botones button:first-child { background: var(--azul); border-color: var(--azul); }
-  #inicio button:focus-visible, #mando button:focus-visible, .grupo button:focus-visible { outline: 2px solid var(--naranja); outline-offset: 2px; }
-  /* y debajo, el idioma, grande */
-  #inicio .idiomas { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
-  #inicio .idiomas button { min-width: 64px; padding: 9px 16px; font-size: clamp(16px, 1.8vw, 21px); background: rgba(7,9,13,.55);
-    border-color: rgba(255,255,255,.18); color: var(--suave); }
-  #inicio .idiomas button:hover { color: #fff; }
-  #inicio .idiomas button.activo { background: rgba(0,128,255,.32); border-color: var(--azul); color: #fff; }
-  body.empezado #inicio { display: none; }
+  /* arranca solo y en silencio, con subtítulos, como un vídeo en redes: un botón para activar el sonido (el navegador no
+     deja sonar nada sin un toque) y, al principio, el título, que se desvanece */
+  #activar { position: fixed; left: 50%; top: 18px; transform: translateX(-50%); font: inherit; font-size: clamp(15px, 1.6vw, 19px);
+    padding: 9px 18px; border-radius: 999px; cursor: pointer; color: #fff; background: rgba(0,128,255,.85); border: 0;
+    box-shadow: 0 4px 18px rgba(0,0,0,.4); }
+  #activar[hidden] { display: none; }
+  #cartela { position: fixed; left: 0; right: 0; top: 30%; text-align: center; pointer-events: none;
+    animation: cartela 5.5s ease forwards; }
+  #cartela h1 { margin: 0; font-size: clamp(32px, 5vw, 60px); font-weight: 600; letter-spacing: .02em; line-height: 1.05;
+    text-shadow: 0 2px 18px rgba(0,0,0,.7); }
+  #cartela h1 small { display: block; font-size: .42em; font-weight: 500; color: var(--naranja); letter-spacing: .12em; }
+  @keyframes cartela { 0%, 65% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+  #activar:focus-visible, #mando button:focus-visible, .grupo button:focus-visible { outline: 2px solid var(--naranja); outline-offset: 2px; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -82,8 +78,8 @@
 <div id="subtitulo"></div>
 <div id="ajustes"><div class="grupo" id="idiomas"></div><div class="grupo"><button id="sonido"></button></div></div>
 <div id="aviso" aria-live="polite"></div>
-<div id="inicio"><h1 id="titulo"></h1><div class="botones"><button id="conSonido"></button><button id="sinSonido"></button></div>
-  <div class="idiomas" id="idiomasInicio"></div></div>
+<div id="cartela"><h1 id="titulo"></h1></div>
+<button id="activar" hidden></button>
 <div id="mando">
   <div id="planos"></div>
   <div id="fila">

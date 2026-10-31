@@ -195,11 +195,11 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && cor
 // música no se separen de la imagen
 document.documentElement.lang = LANG;
 document.title = `${L('Blinky presenta')}: Kliskatek`;   // (el título de la serie: Blinky presenta…)
-for (const [c, nombre] of IDIOMAS) for (const [donde, alInicio] of [['idiomas', false], ['idiomasInicio', true]]) {
+for (const [c, nombre] of IDIOMAS) {
   const b = document.createElement('button'); b.textContent = nombre; b.classList.toggle('activo', c === LANG);
   b.lang = c; b.setAttribute('aria-pressed', c === LANG);
-  b.onclick = () => c !== LANG && (alInicio ? cambiarIdioma(c) : cambiarIdioma(c, t, corriendo));   // (desde el inicio, de vuelta al inicio)
-  document.getElementById(donde).appendChild(b);
+  b.onclick = () => c !== LANG && cambiarIdioma(c, t, corriendo);
+  document.getElementById('idiomas').appendChild(b);
 }
 const sonido = crearSonido({ total: TOTAL, aviso: document.getElementById('aviso') });
 const botonSonido = document.getElementById('sonido');
@@ -208,21 +208,22 @@ const pintarSonido = () => {
   botonSonido.textContent = mudo ? '🔇' : '🔊';
   botonSonido.title = L(mudo ? 'Activar el sonido' : 'Silenciar (con subtítulos)');
   botonSonido.setAttribute('aria-label', botonSonido.title); botonSonido.setAttribute('aria-pressed', mudo);
+  activar.hidden = !mudo;
 };
+const activar = document.getElementById('activar');
+activar.textContent = `🔊 ${L('Activar el sonido')}`;
+activar.onclick = () => { sonido.mudo(false); pintarSonido(); };
 botonSonido.onclick = () => { sonido.mudo(!sonido.mudo()); pintarSonido(); };
 pintarSonido();
 
-// al llegar, la pantalla de inicio: con sonido o en silencio (con subtítulos). Ese toque deja sonar el audio. Si se
-// viene de cambiar de idioma reproduciendo, sigue sin preguntar
-const empezar = (mudo) => { sonido.mudo(mudo); pintarSonido(); document.body.classList.add('empezado'); corriendo = true; pintarMando(); };
+// al llegar arranca solo, en silencio y con subtítulos (como un vídeo en redes: el navegador no deja sonar nada sin un
+// toque), con el título encima unos segundos y el botón para activar el sonido. Con #t= en la dirección (revisión),
+// parado en ese segundo; con &sigue (al cambiar de idioma reproduciendo), sigue
 document.getElementById('titulo').innerHTML = `<small>${L('Blinky presenta')}:</small>Kliskatek`;
-const conSonido = document.getElementById('conSonido'), sinSonido = document.getElementById('sinSonido');
-conSonido.textContent = `▶ ${L('Con sonido')}`; conSonido.onclick = () => empezar(false);
-sinSonido.textContent = L('Sin sonido, con subtítulos'); sinSonido.onclick = () => empezar(true);
 const enHash = parseFloat((location.hash.match(/t=([\d.]+)/) || [])[1]);
-if (!Number.isNaN(enHash)) ir(enHash, false);
-if (/sigue/.test(location.hash)) empezar(sonido.mudo()); else if (!Number.isNaN(enHash)) document.body.classList.add('empezado');
-pintarMando();
+if (Number.isNaN(enHash)) { sonido.mudo(true); corriendo = true; mostrarMando(); }
+else { ir(enHash, false); document.getElementById('cartela').hidden = true; if (/sigue/.test(location.hash)) corriendo = true; }
+pintarSonido(); pintarMando();
 
 window.corto = { ir: (s) => ir(s, false), ver: (s) => { ir(s, false); pintar(); }, seguir: () => { corriendo = true; pintarMando(); }, get t() { return t; }, TOTAL, montados, cam, electron, ren, escena, comp, sonido, guion, grabarMusica };
 

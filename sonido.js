@@ -96,7 +96,7 @@ export function crearSonido({ total, aviso }) {
   async function preparar() {
     contexto();
     await cargando;
-    avisar(L('Preparando el sonido…'));
+    if (!mudo) avisar(L('Preparando el sonido…'));
     const t0 = performance.now();
     await Promise.all(voz.map(async (c) => { c.buf = await ac.decodeAudioData(await fetch(`audio/voz/${LANG}/${c.f}`).then((r) => r.arrayBuffer())); }));
     musica = await new Promise((listo) => {
@@ -152,7 +152,7 @@ export function crearSonido({ total, aviso }) {
       if (m === undefined) return mudo;
       mudo = m;
       try { localStorage.setItem('corto.mudo', m ? '1' : '0'); } catch { /* sin almacenamiento */ }
-      if (m) { parar(); avisar(''); } else { contexto(); despertar(); if (!preparando) preparando = preparar(); }
+      if (m) { parar(); avisar(''); } else { contexto(); despertar(); if (!preparando) preparando = preparar(); if (!musica) avisar(L('Preparando el sonido…')); }
       return mudo;
     },
     // el reloj del corto: mientras suena, el del audio; si no, el de la página, al ritmo de la narración (la imagen va
@@ -182,7 +182,7 @@ export function crearSonido({ total, aviso }) {
       return (c.trozos.find((x) => u < x.hasta) || c.trozos[c.trozos.length - 1]).txt;
     },
   };
-  if (!mudo) preparando = preparar();
+  preparando = preparar();                            // (también en silencio: así, al activarlo, suena enseguida)
   return api;
 }
 
