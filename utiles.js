@@ -53,16 +53,17 @@ export function porTramos(tramos) {
 // cortes, pasa() para no frenar del todo); las dos se evalúan en el mismo t, así que pasar de un seguimiento a otro no
 // da saltos. Una clave con paso: true no frena: la cámara pasa por ella en marcha (Hermite con la tangente de
 // Catmull-Rom entre sus vecinas, en tiempo), y los dos tramos que la tocan van por esa curva. Una clave con llega: k
-// recibe la cámara a k veces la velocidad media del tramo que llega a ella (pasa(0, k); en los cortes).
+// recibe la cámara a k veces la velocidad media del tramo que llega a ella (pasa(0, k); en los cortes); con
+// llegaMira: k2, el punto al que mira llega a k2 veces la suya (0: parado, si el plano siguiente sigue mirando ahí).
 export function porClaves(claves) {
   const val = (v, t) => (typeof v === 'function' ? v(t) : v);
   // la tangente en la clave i (por segundo), o cero si allí se para
   const tang = (i, campo, t) => {
     const c = claves[i];
     if (c.llega != null && i > 0 && claves[i - 1].t <= t) {
-      const p = claves[i - 1], h = c.t - p.t;
-      if (campo === 'fov') return c.llega * ((c.fov ?? 30) - (p.fov ?? 30)) / h;
-      return val(c[campo], t).clone().sub(val(p[campo], t)).multiplyScalar(c.llega / h);
+      const p = claves[i - 1], h = c.t - p.t, k = campo === 'mira' && c.llegaMira != null ? c.llegaMira : c.llega;
+      if (campo === 'fov') return k * ((c.fov ?? 30) - (p.fov ?? 30)) / h;
+      return val(c[campo], t).clone().sub(val(p[campo], t)).multiplyScalar(k / h);
     }
     if (!c.paso || i === 0 || i === claves.length - 1) return null;
     const p = claves[i - 1], n = claves[i + 1];

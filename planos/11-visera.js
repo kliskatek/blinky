@@ -3,12 +3,12 @@
 // de la portada en su primer fotograma (la misma distancia en proporción, el mismo giro y el mismo fov; INICIO de
 // 01-logo.js). Mientras se acerca, la sala se apaga y entran las luces del plano 1, puestas igual respecto al logo; luego
 // la sala, la persona y la gorra desaparecen y queda solo el logo, ya el de la portada (con su grosor), sobre el fondo del
-// plano 1, y empieza a mecerse como empieza allí: el último fotograma es el primero del corto, sin destello.
+// plano 1, y empieza a mecerse como empieza allí; mientras, todo se funde a negro, como empieza el corto.
 //   0-0.8   la persona sonríe (el final del plano 10)
 //   0-5.2   la cámara se acerca a la gorra (sin parar: viene en marcha del plano 10); la sala se apaga y entran las
 //           luces del plano 1
 //   3.4-5.0 desaparece todo menos el logo, que gana el grosor del de la portada
-//   4.8-5.8 el logo empieza a mecerse; corte al plano 1
+//   4.8-5.8 el logo empieza a mecerse y todo se funde a negro; corte al plano 1 (que empieza en negro)
 
 import * as THREE from 'three';
 import { seg, smooth, smoother, lerp, pasa, dialogo, bell } from '../utiles.js';
@@ -25,7 +25,7 @@ export default {
   nombre: 'Fin',
   dura: DURA,
   quieto: [[0, DURA]],
-  montar({ escena, cam, electron, grupo, bloom, habla }) {
+  montar({ escena, cam, electron, grupo, bloom, habla, velo }) {
     const { set, persona, H, luces, monitor } = montarSala(grupo);
     monitor.dibujar({ nuevo: 0.05 + 0.95 * 0.5 });                     // la pantalla, como la deja el plano 10 al acabar
     const base = luces.map((l) => l.intensity);
@@ -36,7 +36,6 @@ export default {
     // de dónde sale la cámara (el final del plano 10) y adónde llega (el primer fotograma del plano 1, sobre esta gorra)
     const posA = H.clone().add(CAM_FINAL.de);
     const tmp = new THREE.PerspectiveCamera(); tmp.position.copy(posA); tmp.lookAt(LOGO);
-    const qA = tmp.quaternion.clone();
     const R1 = new THREE.Quaternion().setFromEuler(new THREE.Euler(...INICIO.rot)), R1inv = R1.clone().invert();
     const posF = logo.localToWorld(V(0, 0, INICIO.distancia / INICIO.escala).applyQuaternion(R1inv));
     const qF = logo.getWorldQuaternion(new THREE.Quaternion()).multiply(R1inv);
@@ -69,7 +68,10 @@ export default {
         habla(dialogo(t, LINEAS), { pos: LOGO, radio: 0.45 });
         const e = ACERCA(seg(t, 0, 5.2));                                // sigue acercándose desde el corte, sin pararse
         cam.position.lerpVectors(posA, posF, e);
-        cam.quaternion.slerpQuaternions(qA, qF, e);
+        // la cámara sigue mirando al logo, como acaba el 10 (así su giro sigue al mismo ritmo en el corte), y pasa poco a
+        // poco al giro final
+        tmp.position.copy(cam.position); tmp.lookAt(LOGO);
+        cam.quaternion.slerpQuaternions(tmp.quaternion, qF, smoother(seg(t, 0, 5.2)));
         cam.fov = lerp(CAM_FINAL.fov, INICIO.fov, e);
 
         // la sala se apaga y entran las luces de la portada (y su bloom)
@@ -96,6 +98,8 @@ export default {
         logo1.visible = t >= 3.4;
         logo1.scale.set(INICIO.escala, INICIO.escala, INICIO.escala * lerp(0.6 / 1.7, 1, smoother(seg(t, 3.4, 5.2))));
         // ya solo, empieza a mecerse como en el primer segundo del plano 1, para que el corte no se note
+        // y todo se funde a negro: el corto empieza en negro (plano 1), así que la vuelta al principio casa del todo
+        velo(smooth(seg(t, 4.8, DURA - 0.05)), 0x000000, { fundido: true });
         logo1.rotation.set(...INICIO.rot); logo1.position.set(0, 0, 0);
         const w = smoother(seg(t, 4.8, DURA));
         if (w > 0) {
@@ -108,7 +112,7 @@ export default {
         // la persona, como al final del plano 10: sonriendo y parpadeando
         persona.cabeza.rotation.set(-0.05, 0, 0);
         persona.sonreir(1); persona.rubor.opacity = 0.32;
-        persona.parpadear(bell((t + 11.2) % 3.7, 0, 0.16));   // el parpadeo sigue la cuenta del plano 10 (11,2 s)
+        persona.parpadear(bell((t + 11.2 + 1.5) % 3.7, 0, 0.16));   // el parpadeo sigue la cuenta del plano 10 (11,2 s)
       },
     };
   },

@@ -172,7 +172,9 @@ export default {
 
         // el destello: blanco que llena la pantalla y se abre sobre el electrón
         const destello = smooth(seg(t, 7.2, 7.9)) * (1 - smooth(seg(t, 7.9, 8.5)));
-        velo(destello, 0xeaf4ff);                                         // sin destello al empezar: el plano 11 acaba en este logo
+        // empieza en negro (en el que acaba el plano 11) y se abre al logo; luego, el destello
+        const negro = 1 - smooth(seg(tReal, 0, 1.0));
+        if (negro > 0) velo(negro, 0x000000, { fundido: true }); else velo(destello, 0xeaf4ff);
         bloom.strength = 0.55 + 1.4 * smooth(seg(t, 5.5, 7.9)) * (1 - smooth(seg(t, 7.9, 8.8)));
 
         // el electrón

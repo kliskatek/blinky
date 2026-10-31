@@ -56,7 +56,8 @@ const velo = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
 velo.position.z = -0.05; velo.renderOrder = 999; cam.add(velo);
 // (con «reducir movimiento» en el sistema, los destellos de los cortes, mucho más suaves)
 const DESTELLO = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0.35 : 1;
-const ponVelo = (opacidad, color = 0xffffff) => { velo.material.opacity = opacidad * DESTELLO; velo.material.color.set(color); };
+// (fundido: true, un fundido a negro: va entero aunque se reduzcan los destellos)
+const ponVelo = (opacidad, color = 0xffffff, { fundido = false } = {}) => { velo.material.opacity = opacidad * (fundido ? 1 : DESTELLO); velo.material.color.set(color); };
 
 // (con multimuestreo: el posproceso pinta en su propia textura, y sin él se pierde el antialias del renderer)
 const comp = new EffectComposer(ren, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
@@ -87,8 +88,14 @@ function escalar(k) {
   ao.gtaoMaterial.defines.SCREEN_SPACE_RADIUS_SCALE = 100 * k; ao.gtaoMaterial.needsUpdate = true;
   ao.updatePdMaterial({ radius: 8 * k });
 }
-const vineta = new ShaderPass(VignetteShader);                 // las esquinas, algo más oscuras, como en una cámara
-vineta.uniforms.offset.value = 0.8; vineta.uniforms.darkness.value = 0.7;
+// las esquinas, algo más oscuras, como en una cámara: multiplicando (la VignetteShader de three las mezcla con un gris
+// del 30 %, que levantaba las esquinas de lo oscuro como una neblina y no dejaba llegar a negro los fundidos)
+const vineta = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, offset: { value: 0.8 }, darkness: { value: 0.7 } },
+  vertexShader: VignetteShader.vertexShader,
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float offset, darkness; varying vec2 vUv;
+    void main() { vec4 c = texture2D(tDiffuse, vUv); vec2 uv = (vUv - 0.5) * offset; gl_FragColor = vec4(c.rgb * (1.0 - darkness * dot(uv, uv)), c.a); }`,
+});
 comp.addPass(vineta);
 comp.addPass(new OutputPass());
 
@@ -159,15 +166,29 @@ function ajustarEntorno(r) {
   if (r.entorno === undefined) return;
   r.grupo.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { if ('envMapIntensity' in m) m.envMapIntensity = r.entorno; }); });
 }
+// Para que las sombras no cambien al moverse la cámara: la distancia a lo del centro (que salta cuando el rayo pasa de
+// una cosa a otra) se sigue con suavidad, en escala logarítmica (τ = 0,5 s de la película; al cambiar de plano o al
+// saltar en el tiempo, de golpe), y el centro de la cámara de sombra se ajusta a la rejilla de sus texels: si se
+// desliza entre dos, los bordes de las sombras tiemblan
 const rayo = new THREE.Raycaster(), adelante = new THREE.Vector3(), foco = new THREE.Vector3();
+const haciaSol = new THREE.Vector3(), ejeX = new THREE.Vector3(), ejeY = new THREE.Vector3(), ARRIBA = new THREE.Vector3(0, 1, 0);
 function ajustarSombra(r) {
   const sol = r.sol; if (!sol) return;
   cam.getWorldDirection(adelante);
   rayo.set(cam.position, adelante); rayo.near = cam.near; rayo.far = cam.far;
   const toca = rayo.intersectObjects(r.opacos, false).find((h) => { for (let o = h.object; o; o = o.parent) if (!o.visible) return false; return true; });
-  const d = toca ? toca.distance : electron.raiz.visible ? electron.raiz.position.distanceTo(cam.position) : 10 * cam.near;
-  const R = d * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * Math.max(1, cam.aspect) * 1.3;
-  foco.copy(cam.position).addScaledVector(adelante, d); r.grupo.worldToLocal(foco);
+  const d0 = toca ? toca.distance : electron.raiz.visible ? electron.raiz.position.distanceTo(cam.position) : 10 * cam.near;
+  const dt = t - r.sombraT; r.sombraT = t;
+  if (!r.sombraD || !(dt >= 0 && dt < 0.25)) r.sombraD = d0;   // (cada plano lleva la suya: al volver a él, dt es grande)
+  else r.sombraD *= Math.pow(d0 / r.sombraD, 1 - Math.exp(-dt / 0.5));
+  const d = r.sombraD, R = d * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * Math.max(1, cam.aspect) * 1.4;
+  foco.copy(cam.position).addScaledVector(adelante, d);
+  // a la rejilla de texels, en los ejes de la cámara de sombra (la mira lookAt desde el sol, con y hacia arriba)
+  haciaSol.copy(r.haciaSol).transformDirection(r.grupo.matrixWorld);
+  ejeX.crossVectors(ARRIBA, haciaSol).normalize(); ejeY.crossVectors(haciaSol, ejeX);
+  const texel = 2 * R / sol.shadow.mapSize.x, px = foco.dot(ejeX), py = foco.dot(ejeY);
+  foco.addScaledVector(ejeX, Math.round(px / texel) * texel - px).addScaledVector(ejeY, Math.round(py / texel) * texel - py);
+  r.grupo.worldToLocal(foco);
   sol.target.position.copy(foco); sol.position.copy(foco).addScaledVector(r.haciaSol, 4 * R);
   const c = sol.shadow.camera; c.left = c.bottom = -R; c.right = c.top = R; c.far = 8 * R; c.updateProjectionMatrix();
   sol.shadow.bias = -0.0003; sol.shadow.normalBias = 0.003 * R;

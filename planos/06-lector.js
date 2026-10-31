@@ -9,7 +9,8 @@
 //   5.4-6.6 entra en la antena (que se enciende) y sale por detrás
 //   6.7-10.4 baja por el cable hasta el lector
 //   10.4-11 entra por el conector
-//   11-13.4 el lector lo recibe; la cámara rodea el lector hasta su lado del Ethernet, como empieza el plano 7; destello
+//   11-13.4 el lector lo recibe (y mientras lo lee, sus aletas barren en rojo de lado a lado, como KITT); la cámara
+//           rodea el lector hasta su lado del Ethernet, como empieza el plano 7; destello
 
 import * as THREE from 'three';
 import { seg, smooth, smoother, bell, lerp, rng, porTramos, porClaves, texturaPunto, dialogo, pasa } from '../utiles.js';
@@ -93,6 +94,15 @@ export default {
     const matLuz = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, 0.4, 0.1), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false });
     grupo.add(new THREE.Mesh(geoLuz, matLuz));
     const conectorM = lector.conectores[0].material; conectorM.emissive = new THREE.Color(0xff5a1a);
+    // mientras lee la señal y lo detecta, las aletas hacen un barrido rojo de ida y vuelta, como el de KITT: una cabeza
+    // que va de un lado a otro, frenando en los extremos, con una estela que se apaga detrás; y una luz roja que la sigue.
+    // Al final vuelven al naranja bajo y parejo con que las encuentra el plano 7
+    const NAR = new THREE.Color(0xff5a1a), ROJO = new THREE.Color(0xff1606);
+    const KITT0 = 11.0 + PAUSA, KITT1 = 13.4 + PAUSA + PAUSA2, PASADA = 0.62, nA = lector.aletas.length;
+    const cabeza = (u) => (nA - 1) * (0.5 - 0.5 * Math.cos(Math.PI * Math.max(0, u) / PASADA));
+    grupo.updateMatrixWorld(true);
+    const posAletas = lector.aletas.map((a) => grupo.worldToLocal(a.getWorldPosition(V())));
+    const luzK = new THREE.PointLight(0xff2010, 0, 0.9 * S / 10 * 2.5, 2); grupo.add(luzK);
 
     // frentes de backscatter que llegan con él: anillos detrás, por la misma ruta
     const anillos = [0, 1, 2, 3].map(() => {
@@ -179,7 +189,17 @@ export default {
         // (el plano 7 empieza con ellas así y las apaga)
         const recibe = smooth(seg(t, 10.9, 11.4));
         lector.leds.forEach((l, i) => { l.visible = recibe < 0.05 || Math.sin((tReal - PAUSA - PAUSA2) * 18 + i * 1.7) > -0.2; });   // (siguen parpadeando en la pausa)
-        lector.aletas.forEach((a, i) => { a.material.emissiveIntensity = 0.35 * smooth(seg(t - i * 0.05, 11.0, 11.8)) + 0.9 * bell(t - i * 0.05, 11.0, 12.0); });   // (una onda que las recorre y se queda baja)
+        const enKitt = smooth(seg(tReal, KITT0, KITT0 + 0.25)) * (1 - smooth(seg(tReal, KITT1 - 0.9, KITT1 - 0.35)));
+        const u = tReal - KITT0, color = NAR.clone().lerp(ROJO, enKitt);
+        lector.aletas.forEach((a, i) => {
+          let k = 0;
+          for (let j = 0; j < 12; j++) { const d = (i - cabeza(u - j * 0.025)) / 1.05; k = Math.max(k, Math.exp(-j * 0.025 / 0.07) * Math.max(0, 1 - d * d)); }
+          const fondo = 0.35 * smooth(seg(t - i * 0.05, 11.0, 11.8)) * (1 - 0.95 * enKitt);   // (apagadas detrás del barrido; al final, bajo y parejo, como lo encuentra el 7)
+          a.material.emissive.copy(color); a.material.emissiveIntensity = fondo + 4 * k * enKitt;
+        });
+        const h = cabeza(u), i0 = Math.min(nA - 2, Math.floor(h));
+        luzK.position.lerpVectors(posAletas[i0], posAletas[i0 + 1], h - i0).y += 0.25;
+        luzK.intensity = 4 * enKitt;
 
         electron.visible = !(t > 6.0 && t < 6.6) && t < 11.0;
         electron.ruta = rutaR; electron.rutaDesde = t < 6.6 ? -1 : 6.6 + PAUSA;

@@ -54,7 +54,12 @@ export function montarSala(grupo) {
     set.updateMatrixWorld(true);
 
     const Sc = monitor.grupo.localToWorld(V(0, 0, 0.017)), Tw = monitor.grupo.localToWorld(monitor.enPantalla(...TARJETA_T));
-    const H = persona.cabeza.localToWorld(V(0, 0.15, 0)), LOGO = persona.logo.getWorldPosition(V());
+    const H = persona.cabeza.localToWorld(V(0, 0.15, 0));
+    // el logo de la gorra, con la cabeza como acaba el plano 10 (un poco hacia atrás): es adonde mira la cámara al cortar
+    // al 11, que lo mide igual (con la cabeza recta, el corte daba un giro de 1° de golpe)
+    persona.cabeza.rotation.set(-0.05, 0, 0); set.updateMatrixWorld(true);
+    const LOGO = persona.logo.getWorldPosition(V());
+    persona.cabeza.rotation.set(0, 0, 0); set.updateMatrixWorld(true);
     const luzPantalla = new THREE.PointLight(0x9fd0ff, 22, 16, 2); luzPantalla.position.copy(Sc).add(V(0, 0.6, 2.6)); grupo.add(luzPantalla);
     luces.push(luzPantalla);
     return { set, monitor, persona, Sc, Tw, H, LOGO, luzPantalla, luces };
@@ -79,7 +84,7 @@ export default {
       { t: 6.4, pos: H.clone().add(V(4.0, 2.8, 8.0)), mira: Sc.clone().add(V(0, -0.9, 0)), fov: 34 },
       { t: 8.2, pos: H.clone().add(V(6.2, 0.9, -0.4)), mira: H, fov: 34, paso: true },
       { t: 9.8, pos: H.clone().add(V(1.9, -0.2, -5.6)), mira: H.clone().add(V(0, 0.15, 0)), fov: 34, paso: true },
-      { t: 11.2, pos: H.clone().add(CAM_FINAL.de), mira: LOGO, fov: CAM_FINAL.fov, llega: 0.5 },   // llega en marcha: el 11 sigue acercándose
+      { t: 11.2, pos: H.clone().add(CAM_FINAL.de), mira: LOGO, fov: CAM_FINAL.fov, llega: 0.5, llegaMira: 0 },   // llega en marcha: el 11 sigue acercándose, mirando al logo
     ]);
 
     const FONDO = new THREE.Color(0x0b0e13);
@@ -98,7 +103,7 @@ export default {
         persona.cabeza.rotation.y = 0.12 * bell(t, 8.0, 10.6);
         persona.sonreir(smooth(seg(t, 6.4, 7.2)));
         persona.rubor.opacity = 0.15 + 0.17 * smooth(seg(t, 6.4, 7.2));   // (contento, se sonroja un poco)
-        persona.parpadear(bell(t % 3.7, 0, 0.16));
+        persona.parpadear(bell((t + 1.5) % 3.7, 0, 0.16));   // (sin parpadeo en el corte al 11)
 
         habla(dialogo(t, LINEAS), { pos: Tw, radio: 0.5 });            // Blinky, desde su tarjeta de la pantalla
         velo(0.6 * (1 - smooth(seg(t, 0, 0.3))), 0xcfe6ff);              // sale del destello; sin fundido al final: sigue el 10
