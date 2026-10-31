@@ -20,6 +20,7 @@ import * as THREE from 'three';
 import { seg, smooth, smoother, bell, lerp, rng, porTramos, porClaves, texturaPunto, dialogo, pasa } from '../utiles.js';
 import { crearSensor, DFN, ZONAS, PISTAS } from '../piezas/sensor.js';
 import { TAM_FINAL3, PLANO_FINAL3, PLANO_VUELTA, ESCALA_SENSOR } from './03-rocky.js';
+import { montarPlaca, SENSOR, PLACA_SENSOR, RECORTE_SENSOR } from '../piezas/placa.js';
 
 // el núcleo y el ADC (de A a B) van F veces más despacio: tr() pasa del tiempo real al de la ruta, y real() al revés
 const A = 4.6, B = 11.4, F = 1.3, MAS = (B - A) * (F - 1);
@@ -61,12 +62,11 @@ export default {
     const W2 = DFN.W / 2, yPlaca = -DFN.H / 2 - 0.01, yCu = yPlaca + 0.012, yE = yCu + ALTO;
     const zMOSI = patas.i1.enDedo.z, zMISO = patas.i2.enDedo.z;
 
-    const placa = new THREE.Mesh(new THREE.BoxGeometry(34, 0.02, 18), new THREE.MeshStandardMaterial({ color: 0x1F5A3E, roughness: 0.45 }));
-    placa.position.y = yPlaca - 0.01; grupo.add(placa);
+    // la placa del tag (piezas/placa.js), a esta escala (el doble que en el plano 3) y con el sensor en el origen: le llegan
+    // el bus SPI por los dos lados y la alimentación, con su condensador de desacoplo
     const cobre = new THREE.MeshStandardMaterial({ color: 0xE0B455, metalness: 0.6, roughness: 0.3, emissive: 0x3A2A00, emissiveIntensity: 1 });
-    for (const z of [zMOSI, zMISO]) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(15 - W2 - 0.03, 0.012, 0.32 * K), cobre); m.position.set(-(15 + W2 + 0.03) / 2, yCu, z); grupo.add(m);
-    }
+    const capa = new THREE.Group(); capa.scale.setScalar(K); capa.position.set(-SENSOR.x * K, yPlaca, -SENSOR.z * K); grupo.add(capa);
+    montarPlaca(capa, { cobre, sensor: false, cu: { y: 0.006, grueso: 0.006 }, placa: PLACA_SENSOR, recorte: RECORTE_SENSOR });
 
     // la ruta
     const enDie = (uv) => uv.map(([u, v]) => padEn(u, v, ALTO));
@@ -96,7 +96,7 @@ export default {
     // lo que se enciende: la pista por donde pasa (azul a la ida, roja a la vuelta), la lógica, el núcleo, el ADC
     const luz = (color) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
     const tubo = (curva, [t0, t1], mat, ease = smoother) => {
-      const geo = new THREE.TubeGeometry(curva, 400, 0.011, 6); grupo.add(new THREE.Mesh(geo, mat));
+      const geo = new THREE.TubeGeometry(curva, 400, 0.011, 10); grupo.add(new THREE.Mesh(geo, mat));
       const n = geo.index.count;
       return (t) => geo.setDrawRange(0, Math.floor(n * ease(seg(t, t0, t1)) / 6) * 6);
     };

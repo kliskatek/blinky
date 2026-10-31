@@ -89,14 +89,14 @@ export default {
     const tam = (t) => (t < 5.4 ? 1 : t < 6.0 ? lerp(1, 0.3, seg(t, 5.4, 6.0)) : t < 10.4 ? TAM : lerp(TAM, 0.2, seg(t, 10.4, 11)));
 
     // lo que se enciende: la funda del cable por donde baja, el parche de la antena, el conector, los LED y las aletas
-    const geoLuz = new THREE.TubeGeometry(cable, planta.coax.tramos, 0.065, 8);       // (con los tramos del cable: con menos, en las curvas cerradas atajaba y se salía de él)
+    const geoLuz = new THREE.TubeGeometry(cable, planta.coax.tramos, 0.065, 16);       // (con los tramos del cable: con menos, en las curvas cerradas atajaba y se salía de él)
     const matLuz = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, 0.4, 0.1), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false });
     grupo.add(new THREE.Mesh(geoLuz, matLuz));
     const conectorM = lector.conectores[0].material; conectorM.emissive = new THREE.Color(0xff5a1a);
 
     // frentes de backscatter que llegan con él: anillos detrás, por la misma ruta
     const anillos = [0, 1, 2, 3].map(() => {
-      const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.025, 8, 64),
+      const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.025, 12, 128),
         new THREE.MeshBasicMaterial({ color: 0xff8000, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
       grupo.add(m); return m;
     });

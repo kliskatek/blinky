@@ -71,7 +71,7 @@ export default {
     const rutaA = (t) => (t >= 3.9 && t < 4.4 ? ENCIMA.clone() : baseA(t).add(V(0, 0.04 * Math.sin(t * 2.4) * smooth(seg(t, 5, 6)), 0)));
 
     // los tres datos girando alrededor, que se enroscan con él; y el estallido
-    const bolitas = COLORES.map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(2.2), toneMapped: false })); A.add(m); return m; });
+    const bolitas = COLORES.map((c) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.035, 32, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(2.2), toneMapped: false })); A.add(m); return m; });
     const r = rng(31), N = 260, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), semillas = [];
     const PALETA = [0xff5a1a, ...COLORES, 0x3dc8ff].map((c) => new THREE.Color(c));
     for (let i = 0; i < N; i++) {

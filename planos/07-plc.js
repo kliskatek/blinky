@@ -70,7 +70,7 @@ export default {
     // los datos de los sensores: una bolita de color por sensor, que sube por su cable cada poco; en la CPU, los datos
     // de cada módulo viajan por el carril hasta ella; al salir, giran alrededor del electrón
     const bolitas = arm.sensores.map(({ n, curva }) => {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(COLORES[n]).multiplyScalar(2.2), toneMapped: false }));
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.035, 32, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(COLORES[n]).multiplyScalar(2.2), toneMapped: false }));
       grupo.add(m);
       return { n, m, curva: aMundo(curva), fase: { di: 0, ai: 0.8, iol: 1.6 }[n] };
     });

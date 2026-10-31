@@ -5,7 +5,7 @@
 // Misma interfaz que piezas/rocky.js: padEn(u, v), hilos[lado + pata], patas[lado + pata], yCara.
 
 import * as THREE from 'three';
-import { rng } from '../utiles.js';
+import { rng, cajaBisel } from '../utiles.js';
 
 const ORO = 0xE2B95A;
 export const DFN = { W: 4.4, H: 0.6, PASO: 1.0, dw: 3.0, dh: 2.25, alto: 0.18 };
@@ -63,7 +63,7 @@ function textura() {
     g.fillStyle = '#8c949a'; g.fillRect(X(u) - 18, Y(v) - 18, 36, 36);
   }
   g.fillStyle = '#efe2b6'; g.font = '600 22px Oxanium, "Segoe UI", sans-serif'; g.fillText('TS-01', X(0.84), Y(0.955));
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 16;
   return t;
 }
 
@@ -72,16 +72,16 @@ export function crearSensor() {
   const g = new THREE.Group();
   const matOro = new THREE.MeshStandardMaterial({ color: ORO, metalness: 1, roughness: 0.28 });
   const matPlata = new THREE.MeshStandardMaterial({ color: 0xbfc6cc, metalness: 0.72, roughness: 0.28 });
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(W, H, W), new THREE.MeshStandardMaterial({ color: 0x1b1f23, roughness: 0.62, metalness: 0.1 })));
+  g.add(new THREE.Mesh(cajaBisel(W, H, W, 0.05), new THREE.MeshStandardMaterial({ color: 0x1b1f23, roughness: 0.62, metalness: 0.1 })));
   const pad = new THREE.Mesh(new THREE.BoxGeometry(W - 0.4, 0.02, W - 0.4), new THREE.MeshStandardMaterial({ color: 0x2a2f34, roughness: 0.4, metalness: 0.5 }));
   pad.position.y = H / 2 + 0.01; g.add(pad);
 
   const patas = {};
   for (const lado of ['i', 'd']) for (let k = 0; k < 4; k++) {
     const s = lado === 'i' ? -1 : 1, z = (k - 1.5) * PASO;
-    const p = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.24, 0.46), matPlata.clone());
+    const p = new THREE.Mesh(cajaBisel(0.06, 0.24, 0.46, 0.012), matPlata.clone());
     p.position.set(s * W / 2, -H / 2 + 0.12, z); g.add(p);
-    const d = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.34), matOro.clone());
+    const d = new THREE.Mesh(cajaBisel(0.5, 0.03, 0.34, 0.008), matOro.clone());
     d.position.set(s * E, H / 2 + 0.03, z); g.add(d);
     patas[lado + k] = { pata: p, dedo: d, enDedo: new THREE.Vector3(s * E, H / 2 + 0.05, z) };
   }
@@ -90,7 +90,7 @@ export function crearSensor() {
   const lado = new THREE.MeshStandardMaterial({ color: 0x5d6670, metalness: 0.7, roughness: 0.35 });
   const cara = new THREE.MeshStandardMaterial({ map: textura(), color: 0xb4bcc4, roughness: 0.5, metalness: 0.1, emissive: 0xffffff, emissiveIntensity: 0.07 });
   cara.emissiveMap = cara.map;
-  const die = new THREE.Mesh(new THREE.BoxGeometry(dw, alto, dh), [lado, lado, cara, lado, lado, lado]);
+  const die = new THREE.Mesh(cajaBisel(dw, alto, dh, 0.02), [lado, lado, cara, lado, lado, lado]);
   die.position.y = yDie + alto / 2; g.add(die);
   const padEn = (u, v, alzado = 0.01) => new THREE.Vector3((u - 0.5) * dw, yCara + alzado, (v - 0.5) * dh);
 
@@ -98,7 +98,7 @@ export function crearSensor() {
   for (const [u, v, l, k] of PADS_S) {
     const a = padEn(u, v), b = patas[l + k].enDedo.clone();
     const curva = new THREE.CatmullRomCurve3([a, new THREE.Vector3(a.x + (b.x - a.x) * 0.25, a.y + 0.28, a.z + (b.z - a.z) * 0.25), b]);
-    const m = new THREE.Mesh(new THREE.TubeGeometry(curva, 32, 0.016, 6), matOro.clone());
+    const m = new THREE.Mesh(new THREE.TubeGeometry(curva, 64, 0.016, 12), matOro.clone());
     g.add(m); hilos[l + k] = { curva, malla: m };
   }
   return { grupo: g, padEn, hilos, patas, yCara };

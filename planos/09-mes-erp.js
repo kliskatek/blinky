@@ -24,6 +24,7 @@ import { crearAlerta } from '../piezas/alerta.js';
 import { cartel } from '../piezas/cartel.js';
 import { cajaRedonda } from '../piezas/tag.js';
 import { L, num } from '../idioma.js';
+import { matLinea, aristas, segmentos } from '../lineas.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const PARA = 11.6, PAUSA = 3.4;
@@ -72,7 +73,7 @@ export default {
     grupo.add(new THREE.GridHelper(220, 110, 0x1a6fa8, 0x0d2a40));
 
     // ------------------------------------------------------------ el MES: la nave, el rótulo y las estaciones
-    const nave = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(12, 7, 34)), new THREE.LineBasicMaterial({ color: 0x3dc8ff, transparent: true, opacity: 0.45, toneMapped: false }));
+    const nave = aristas(new THREE.BoxGeometry(12, 7, 34), matLinea({ color: 0x3dc8ff, opacity: 0.45, toneMapped: false }));
     nave.position.set(0, 6.5, 45); grupo.add(nave);
     const rotuloMES = cartel([
       { txt: 'MES', col: '#9fe8ff', y: 250, size: 260, x: 512, alinea: 'center' },
@@ -80,7 +81,7 @@ export default {
     ], 7, 2.6, { fondo: 'rgba(0,0,0,0)', borde: 'rgba(0,0,0,0)' });
     rotuloMES.malla.position.set(0, 12.0, 61); rotuloMES.malla.rotation.y = 0.25; grupo.add(rotuloMES.malla);
     const estaciones = [[Z_AGR, `1 · ${L('AGRUPAR')}`], [Z_MED, `2 · ${L('MEDIA')}`], [Z_FIL, `3 · ${L('FILTRAR')}  T > ${L('MEDIA')} + ${MARGEN} °C`], [Z_EVT, `4 · ${L('EVENTOS')}`]].map(([z, txt], i) => {
-      const aro = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.045, 8, 96), aditivo(new THREE.Color(0.3, 1.0, 1.7), 0.5));
+      const aro = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.045, 16, 256), aditivo(new THREE.Color(0.3, 1.0, 1.7), 0.5));
       aro.position.set(0, Y, z); grupo.add(aro);
       const r = cartel([{ txt, col: '#c8f0ff', y: 150, size: i === 2 ? 74 : 96, ancho: 960 }], 4.2, 0.8, { fondo: 'rgba(6,24,40,.7)', borde: '#3dc8ff' });
       r.malla.position.set(0, Y - 3.35, z); r.malla.rotation.y = 0.55; grupo.add(r.malla);   // debajo del aro: encima va el marcador de la media
@@ -92,7 +93,7 @@ export default {
     for (let k = 0; k <= 256; k += 32) { gm.beginPath(); gm.moveTo(k, 0); gm.lineTo(k, 256); gm.moveTo(0, k); gm.lineTo(256, k); gm.stroke(); }
     const texM = new THREE.CanvasTexture(cm); texM.wrapS = texM.wrapT = THREE.RepeatWrapping; texM.repeat.set(3, 3);
     const membranaM = new THREE.MeshBasicMaterial({ map: texM, color: new THREE.Color(0.4, 1.0, 1.6), transparent: true, opacity: 0.35, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
-    const membrana = new THREE.Mesh(new THREE.CircleGeometry(2.55, 64), membranaM); membrana.position.set(0, Y, Z_FIL); grupo.add(membrana);
+    const membrana = new THREE.Mesh(new THREE.CircleGeometry(2.55, 128), membranaM); membrana.position.set(0, Y, Z_FIL); grupo.add(membrana);
 
     // el centro del lote (Blinky va en el centro; los demás, en un anillo a su alrededor)
     const zLote = porTramos([
@@ -121,10 +122,9 @@ export default {
     // la media: los valores viajan (un punto de luz cada uno) a un marcador encima del lote, que va sacando la media;
     // al final, la media se va al histórico
     const marcador = cartel([], 3.4, 0.9, { fondo: 'rgba(6,24,40,.82)', borde: '#3dc8ff' }); grupo.add(marcador.malla);
-    const geoRayos = new THREE.BufferGeometry(); geoRayos.setAttribute('position', new THREE.BufferAttribute(new Float32Array(8 * 2 * 3), 3));
-    const rayos = new THREE.LineSegments(geoRayos, new THREE.LineBasicMaterial({ color: 0x3dc8ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-    rayos.frustumCulled = false; grupo.add(rayos);
-    const chispas = Array.from({ length: 8 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), aditivo(new THREE.Color(0.8, 1.6, 2.2), 1)); grupo.add(m); return m; });
+    const rayos = segmentos(8, matLinea({ color: 0x3dc8ff, opacity: 0, blending: THREE.AdditiveBlending, toneMapped: false }));
+    grupo.add(rayos.malla);
+    const chispas = Array.from({ length: 8 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.07, 24, 16), aditivo(new THREE.Color(0.8, 1.6, 2.2), 1)); grupo.add(m); return m; });
     const VALORES = [...OTROS, SUYO], llegaValor = (k) => 5.7 + 0.2 * k + 0.35;
     const media = crearDato(`x̄ ${coma(VALORES.reduce((a, b) => a + b) / VALORES.length)}`, new THREE.Color(0.9, 1.3, 1.7)); grupo.add(media.grupo);
 
@@ -139,9 +139,9 @@ export default {
     const aros = [];
     for (let k = 0; k < 3; k++) {
       const y = 1.0 + k * 1.75;
-      const d = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 1.4, 64), vidrioDB); d.position.copy(DB).setY(y); grupo.add(d);
+      const d = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 1.4, 160), vidrioDB); d.position.copy(DB).setY(y); grupo.add(d);
       for (const dy of [-0.7, 0.7]) {
-        const a = new THREE.Mesh(new THREE.TorusGeometry(3.02, 0.05, 8, 96), new THREE.MeshBasicMaterial({ color: MORADO, toneMapped: false }));
+        const a = new THREE.Mesh(new THREE.TorusGeometry(3.02, 0.05, 16, 256), new THREE.MeshBasicMaterial({ color: MORADO, toneMapped: false }));
         a.rotation.x = Math.PI / 2; a.position.copy(DB).setY(y + dy); grupo.add(a); aros.push(a);
       }
     }
@@ -171,14 +171,14 @@ export default {
     // el carril de luz, de la estación 4 a la base de datos, y otros paquetes que van a ella (del color del ERP)
     // (acaba de frente a su fila, la nueva: antes acababa más alto y, visto desde la alerta, apuntaba a la AV-0040)
     const carril = new THREE.CatmullRomCurve3([V(0, Y, Z_EVT), V(0, 6.5, 18), V(1.5, 5.2, 2), V(3.5, 4.4, -10), filaMundo.clone().addScaledVector(normalTabla, 3)]);
-    grupo.add(new THREE.Mesh(new THREE.TubeGeometry(carril, 200, 0.06, 8), aditivo(new THREE.Color(0.65, 0.3, 1.5), 0.55)));
+    grupo.add(new THREE.Mesh(new THREE.TubeGeometry(carril, 400, 0.06, 16), aditivo(new THREE.Color(0.65, 0.3, 1.5), 0.55)));
     const entrada = new THREE.LineCurve3(V(0, Y, 74), V(0, Y, Z_AGR));
-    grupo.add(new THREE.Mesh(new THREE.TubeGeometry(entrada, 40, 0.06, 8), aditivo(new THREE.Color(0.2, 0.8, 1.5), 0.55)));
+    grupo.add(new THREE.Mesh(new THREE.TubeGeometry(entrada, 80, 0.06, 16), aditivo(new THREE.Color(0.2, 0.8, 1.5), 0.55)));
     const viajeros = [];
     for (let i = 0; i < 9; i++) {
       const a = (i / 9) * Math.PI * 2, ini = V(Math.cos(a) * 40, 3 + (i % 3) * 3, -24 + Math.sin(a) * 40);
       const c = new THREE.CatmullRomCurve3([ini, ini.clone().lerp(DB, 0.5).setY(6 + (i % 2) * 2), DB.clone().setY(4)]);
-      grupo.add(new THREE.Mesh(new THREE.TubeGeometry(c, 80, 0.03, 6), aditivo(0x6a2fb0, 0.5)));
+      grupo.add(new THREE.Mesh(new THREE.TubeGeometry(c, 160, 0.03, 12), aditivo(0x6a2fb0, 0.5)));
       const m = new THREE.Mesh(cajaRedonda(0.5, 0.5, 0.5, 0.08, 0.03), new THREE.MeshBasicMaterial({ color: MORADO, toneMapped: false, transparent: true, opacity: 0.8 }));
       grupo.add(m); viajeros.push({ m, c, f: i * 0.37 });
     }
@@ -246,15 +246,13 @@ export default {
         const parcial = n ? VALORES.slice(0, n).reduce((a, b) => a + b) / n : 0;
         marcador.pintar([{ txt: n ? `${L('MEDIA')}  ${coma(parcial)} °C` : `${L('MEDIA')}  –`, col: n === VALORES.length ? '#ffffff' : '#c8f0ff', y: 175, size: 104 },
           { txt: `${n} / ${VALORES.length} ${L('lecturas')}`, col: '#7fb8d8', y: 245, size: 50 }]);
-        const pos = geoRayos.attributes.position;
         VALORES.forEach((_, k) => {
           const de = k < OTROS.length ? otros[k].grupo.position : posB(t);
-          pos.setXYZ(2 * k, de.x, de.y, de.z); pos.setXYZ(2 * k + 1, M.x, M.y - 0.4, M.z);
+          rayos.poner(k, de, V(M.x, M.y - 0.4, M.z));
           const u = seg(t, llegaValor(k) - 0.35, llegaValor(k));
           chispas[k].position.copy(de).lerp(M, u); chispas[k].visible = u > 0 && u < 1;
         });
-        pos.needsUpdate = true;
-        rayos.material.opacity = 0.45 * verMedia * (1 - smooth(seg(t, 7.5, 7.9)));
+        rayos.malla.material.opacity = 0.45 * verMedia * (1 - smooth(seg(t, 7.5, 7.9)));
         const vaHist = seg(t, 7.4, 8.8);
         media.grupo.visible = vaHist > 0 && vaHist < 1;
         media.grupo.position.copy(M).add(V(16 * easeIn(vaHist), 1.5 * vaHist, -3 * vaHist));

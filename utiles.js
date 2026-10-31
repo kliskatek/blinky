@@ -1,5 +1,6 @@
 // Curvas de tiempo (las mismas que k3d-core.js de la web), recorridos, cámara por claves y texturas comunes.
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { L, LETRAS_SEG } from './idioma.js';
 
 export const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -107,6 +108,13 @@ export function texturaPunto() {
   gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
   return (punto = new THREE.CanvasTexture(c));
+}
+
+// una caja con los cantos redondeados (en lo real ninguno es un filo, y el canto coge la luz): de radio un quinto de su
+// lado menor, sin pasar de rMax (en las unidades de la pieza). Las caras y sus materiales, como en BoxGeometry
+export function cajaBisel(w, h, d, rMax) {
+  const r = Math.min(rMax, 0.2 * Math.min(w, h, d));
+  return r > 1e-5 ? new RoundedBoxGeometry(w, h, d, 2, r) : new THREE.BoxGeometry(w, h, d);
 }
 
 export function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296; }

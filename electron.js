@@ -55,7 +55,7 @@ export class Electron {
 
     // el núcleo: color por encima de 1 y sin tone mapping, para que el bloom lo haga brillar
     this.matNucleo = new THREE.MeshBasicMaterial({ toneMapped: false });
-    this.nucleo = new THREE.Mesh(new THREE.SphereGeometry(R, 32, 24), this.matNucleo);
+    this.nucleo = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 48), this.matNucleo);
     this.raiz.add(this.nucleo);
     // la piel: un borde que brilla más que el centro (fresnel), para que tenga volumen y no sea un disco plano
     this.matPiel = new THREE.ShaderMaterial({
@@ -68,7 +68,7 @@ export class Electron {
           gl_FragColor = vec4(color * pow(f, 2.2), 1.0); }`,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     });
-    this.piel = new THREE.Mesh(new THREE.SphereGeometry(R * 1.12, 32, 24), this.matPiel);
+    this.piel = new THREE.Mesh(new THREE.SphereGeometry(R * 1.12, 64, 48), this.matPiel);
     this.nucleo.add(this.piel);
 
     this.matHalo = new THREE.SpriteMaterial({ map: texturaHalo(), blending: THREE.AdditiveBlending, depthWrite: false,
@@ -87,8 +87,8 @@ export class Electron {
     const blanco = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false, transparent: true });
     this.ojosM = [-1, 1].map((s) => {
       const ojo = new THREE.Group();
-      const iris = new THREE.Mesh(new THREE.CircleGeometry(1, 28), negro); iris.scale.set(0.25, 0.36, 1);
-      const chispa = new THREE.Mesh(new THREE.CircleGeometry(1, 16), blanco); chispa.scale.setScalar(0.085);
+      const iris = new THREE.Mesh(new THREE.CircleGeometry(1, 64), negro); iris.scale.set(0.25, 0.36, 1);
+      const chispa = new THREE.Mesh(new THREE.CircleGeometry(1, 32), blanco); chispa.scale.setScalar(0.085);
       chispa.position.set(0.08, 0.13, 0.001);
       iris.renderOrder = 20; chispa.renderOrder = 21;
       ojo.add(iris, chispa);

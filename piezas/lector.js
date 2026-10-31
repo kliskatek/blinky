@@ -4,6 +4,7 @@
 
 import * as THREE from 'three';
 import { pintura, cepillado, conTexturas } from './texturas.js';
+import { cajaBisel } from '../utiles.js';
 
 const V3 = THREE.Vector3, MM = 0.001;
 const mat = (color, metal = 0.2, rug = 0.55) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rug });
@@ -18,7 +19,7 @@ function losa(w, h, d, r, b = Math.min(r * 0.5, d * 0.3)) {
   s.lineTo(-x + R, y); s.absarc(-x + R, y - R, R, Math.PI / 2, Math.PI);
   s.lineTo(-x, -y + R); s.absarc(-x + R, -y + R, R, Math.PI, 1.5 * Math.PI);
   const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(1e-4, d - 2 * b), bevelEnabled: true, bevelThickness: b,
-    bevelSize: b, bevelSegments: 3, curveSegments: 10 });
+    bevelSize: b, bevelSegments: 6, curveSegments: 24 });
   g.translate(0, 0, -(d - 2 * b) / 2);
   return g;
 }
@@ -33,7 +34,7 @@ export function crearAntenaPanel() {
   s.moveTo(-L + c, -L); s.lineTo(L - c, -L); s.lineTo(L, -L + c); s.lineTo(L, L - c);
   s.lineTo(L - c, L); s.lineTo(-L + c, L); s.lineTo(-L, L - c); s.lineTo(-L, -L + c); s.closePath();
   const geo = new THREE.ExtrudeGeometry(s, { depth: 22 * MM, bevelEnabled: true, bevelThickness: 6 * MM, bevelSize: 5.5 * MM,
-    bevelSegments: 4, curveSegments: 2 });
+    bevelSegments: 8, curveSegments: 6 });
   geo.translate(0, 0, -11 * MM);
   const cuerpo = conTexturas(mat(0xE6E3DC, 0.02, 1), pintura(), 1, 1);
   g.add(new THREE.Mesh(geo, cuerpo));
@@ -43,7 +44,7 @@ export function crearAntenaPanel() {
   const metal = mat(0x9AA0A6, 0.6, 0.35);
   const soporte = new THREE.Mesh(losa(70 * MM, 70 * MM, 5 * MM, 6 * MM), metal);
   soporte.position.z = -19.5 * MM;
-  const rotula = new THREE.Mesh(new THREE.CylinderGeometry(9 * MM, 9 * MM, 34 * MM, 20), metal);
+  const rotula = new THREE.Mesh(new THREE.CylinderGeometry(9 * MM, 9 * MM, 34 * MM, 48), metal);
   rotula.rotation.x = Math.PI / 2;
   rotula.position.z = -38 * MM;
   g.add(soporte, rotula);
@@ -53,9 +54,9 @@ export function crearAntenaPanel() {
 // Pie de suelo: base redonda y un tubo hasta `alto`
 export function crearPie(alto) {
   const g = new THREE.Group(), metal = mat(0x3A4046, 0.6, 0.35);
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(60 * MM, 66 * MM, 8 * MM, 40), metal);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(60 * MM, 66 * MM, 8 * MM, 96), metal);
   base.position.y = 4 * MM;
-  const tubo = new THREE.Mesh(new THREE.CylinderGeometry(8 * MM, 8 * MM, alto, 20), metal);
+  const tubo = new THREE.Mesh(new THREE.CylinderGeometry(8 * MM, 8 * MM, alto, 48), metal);
   tubo.position.y = alto / 2;
   g.add(base, tubo);
   return g;
@@ -79,22 +80,22 @@ export function crearLectorFijo() {
   const n = 22, aletas = [];
   for (let i = 0; i < n; i++) {
     const m = conTexturas(new THREE.MeshStandardMaterial({ color: 0x1d2024, metalness: 0.45, roughness: 0.8, emissive: 0xff5a1a, emissiveIntensity: 0 }), cepillado(), 1, 1);
-    aletas.push(pieza(new THREE.BoxGeometry(4.5 * MM, 4.5 * MM, D - 34 * MM), m, -W / 2 + 20 * MM + i * (W - 40 * MM) / (n - 1), 42.5 * MM, 0));
+    aletas.push(pieza(cajaBisel(4.5 * MM, 4.5 * MM, D - 34 * MM, MM), m, -W / 2 + 20 * MM + i * (W - 40 * MM) / (n - 1), 42.5 * MM, 0));
   }
   pieza(tumbada(losa(72 * MM, 26 * MM, 3 * MM, 4 * MM)), mat(0x0b0c0d, 0.3, 0.2), 0, 45 * MM, D / 2 - 42 * MM);
   const leds = [0x2EBD6B, 0x2EBD6B, 0xF2B01E, 0x2E9BFF].map((c, i) =>
-    pieza(new THREE.BoxGeometry(7 * MM, 2 * MM, 3 * MM), new THREE.MeshBasicMaterial({ color: c, toneMapped: false }),
+    pieza(cajaBisel(7 * MM, 2 * MM, 3 * MM, 0.5 * MM), new THREE.MeshBasicMaterial({ color: c, toneMapped: false }),
       (i - 1.5) * 12 * MM, 45.5 * MM, -D / 2 + 30 * MM));
   const plata = mat(0xC9CDD1, 0.85, 0.3);
   const conectores = [];
   for (let i = 0; i < 8; i++) {
     const x = -W / 2 + 32 * MM + i * 19 * MM;
-    const cuerpo = pieza(new THREE.CylinderGeometry(5.5 * MM, 5.5 * MM, 12 * MM, 16), plata.clone(), x, 20 * MM, D / 2 + 6 * MM);
+    const cuerpo = pieza(new THREE.CylinderGeometry(5.5 * MM, 5.5 * MM, 12 * MM, 40), plata.clone(), x, 20 * MM, D / 2 + 6 * MM);
     cuerpo.rotation.x = Math.PI / 2; conectores.push(cuerpo);
     const tuerca = pieza(new THREE.CylinderGeometry(7 * MM, 7 * MM, 4 * MM, 6), plata, x, 20 * MM, D / 2 + 2 * MM);
     tuerca.rotation.x = Math.PI / 2;
   }
-  pieza(new THREE.BoxGeometry(34 * MM, 9 * MM, 8 * MM), mat(0x2EAA55, 0.1, 0.5), W / 2 - 40 * MM, 21 * MM, D / 2 + 4 * MM);   // GPIO
-  pieza(new THREE.BoxGeometry(14 * MM, 12 * MM, 16 * MM), negro, W / 2 + 2 * MM, 20 * MM, 20 * MM);                            // Ethernet
+  pieza(cajaBisel(34 * MM, 9 * MM, 8 * MM, MM), mat(0x2EAA55, 0.1, 0.5), W / 2 - 40 * MM, 21 * MM, D / 2 + 4 * MM);   // GPIO
+  pieza(cajaBisel(14 * MM, 12 * MM, 16 * MM, MM), negro, W / 2 + 2 * MM, 20 * MM, 20 * MM);                            // Ethernet
   return { grupo: g, leds, aletas, conectores, puerto: new V3(-W / 2 + 32 * MM, 20 * MM, D / 2 + 12 * MM), red: new V3(W / 2 + 9 * MM, 20 * MM, 20 * MM) };
 }

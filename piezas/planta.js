@@ -24,6 +24,8 @@ import { crearEdge } from './edge.js';
 import { cartel } from './cartel.js';
 import { L as enIdioma } from '../idioma.js';
 import { hormigon, bloques, pintura, cepillado, carton, pegatina, madera, moqueta, etiqueta, conTexturas } from './texturas.js';
+import { matLinea, aristas } from '../lineas.js';
+import { cajaBisel } from '../utiles.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const mat = (color, metal = 0.2, rug = 0.6, o = {}) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rug, ...o });
@@ -47,7 +49,7 @@ export const ANTENA_POS = V(2.6, 2.68, -4.12);                  // colgada del b
 
 export function crearPlanta() {
   const g = new THREE.Group();
-  const caja = (w, h, d, m, x, y, z, padre = g) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); padre.add(o); return o; };
+  const caja = (w, h, d, m, x, y, z, padre = g) => { const o = new THREE.Mesh(cajaBisel(w, h, d, 0.006), m); o.position.set(x, y, z); padre.add(o); return o; };
 
   // ---------------------------------------------------------------- la nave
   caja(26, 0.1, 18, conTexturas(mat(0x5a6169, 0.0, 1), hormigon(), 26 / 4, 18 / 4), 0, -0.05, -0.5);   // suelo, de hormigón
@@ -88,24 +90,24 @@ export function crearPlanta() {
   caja(0.45, 0.35, 0.14, conTexturas(mat(0xc9ccd0, 0.2, 1), pintura()), 0, 0, 0, mando);
   caja(0.16, 0.1, 0.01, new THREE.MeshBasicMaterial({ color: 0x1d3f5c }), 0.1, 0.07, 0.072, mando);   // su pantallita
   for (const [x, c] of [[0.02, 0xe8e8e8], [0.08, 0x1d1d1d], [0.14, 0xf2b01e]]) {                       // los pulsadores
-    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.02, 16), mat(c, 0.1, 0.4)); b.rotation.x = Math.PI / 2; b.position.set(x, -0.08, 0.078); mando.add(b);
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.02, 40), mat(c, 0.1, 0.4)); b.rotation.x = Math.PI / 2; b.position.set(x, -0.08, 0.078); mando.add(b);
   }
   caja(0.07, 0.07, 0.03, mat(0xd92b2b, 0.1, 0.4), -0.1, 0, 0.08, mando);                       // la seta
   caja(0.05, 0.05, 0.02, new THREE.MeshBasicMaterial({ color: 0x2EBD6B }), 0.08, 0.07, 0.075, mando);
   // dentro: el generador (con sus aletas), su eje y el rotor que lo mueve
   const G = GEN, aceroOsc = mat(0x2c3238, 0.6, 0.4);
-  const gen = new THREE.Mesh(new THREE.CylinderGeometry(G.r, G.r, G.largo, 40), conTexturas(mat(0x3d6f9e, 0.4, 0.9), pintura(), 4, 1)); gen.rotation.z = Math.PI / 2; gen.position.set(G.x, G.y, G.z); g.add(gen);
+  const gen = new THREE.Mesh(new THREE.CylinderGeometry(G.r, G.r, G.largo, 128), conTexturas(mat(0x3d6f9e, 0.4, 0.9), pintura(), 4, 1)); gen.rotation.z = Math.PI / 2; gen.position.set(G.x, G.y, G.z); g.add(gen);
   caja(0.16, 0.08, 0.14, conTexturas(mat(0x3d6f9e, 0.4, 0.9), pintura()), G.x + 0.12, G.y + G.r + 0.03, G.z - 0.12);   // su caja de bornes
   const placaGen = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.1), pegatina('placa', ['KLK-G 7.5', '400 V  50 Hz', '7,5 kW', '1450 rpm', 'IP55  cl. F']));
   placaGen.position.set(G.x - G.largo / 2 + 0.191, G.y, G.z + G.r + 0.004); g.add(placaGen);
   for (let k = 0; k < 9; k++) { if (k === 4 || k === 1 || k === 2) continue;                  // (la del medio, no: ahí va la placa del tag; ni las de la placa de características, que la cortaban)
-    const a = new THREE.Mesh(new THREE.TorusGeometry(G.r + 0.005, 0.012, 6, 40), mat(0x335e86, 0.4, 0.45)); a.rotation.y = Math.PI / 2; a.position.set(G.x - G.largo / 2 + 0.08 + k * 0.074, G.y, G.z); g.add(a); }
+    const a = new THREE.Mesh(new THREE.TorusGeometry(G.r + 0.005, 0.012, 12, 128), mat(0x335e86, 0.4, 0.45)); a.rotation.y = Math.PI / 2; a.position.set(G.x - G.largo / 2 + 0.08 + k * 0.074, G.y, G.z); g.add(a); }
   caja(G.largo * 0.8, G.y - G.r - 0.04, 0.4, aceroOsc, G.x, (G.y - G.r - 0.04) / 2 + 0.12, G.z);   // la bancada
   caja(0.07, MONTURA + 0.02, 0.16, mat(0x9aa0a6, 0.6, 0.35), G.x, G.y + G.r + (MONTURA - 0.02) / 2, G.z).receiveShadow = true;   // el taco del tag
-  const eje = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.1, 20), conTexturas(mat(0xc9cdd1, 0.85, 0.8), cepillado(), 1, 3)); eje.rotation.z = Math.PI / 2; eje.position.set(G.x + G.largo / 2 + 0.5, G.y, G.z); g.add(eje);
+  const eje = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.1, 48), conTexturas(mat(0xc9cdd1, 0.85, 0.8), cepillado(), 1, 3)); eje.rotation.z = Math.PI / 2; eje.position.set(G.x + G.largo / 2 + 0.5, G.y, G.z); g.add(eje);
   for (const x of [G.x + G.largo / 2 + 0.15, G.x + G.largo / 2 + 0.95]) caja(0.1, G.y - 0.15, 0.16, aceroOsc, x, (G.y - 0.15) / 2 + 0.12, G.z);   // cojinetes
   const rotor = new THREE.Group(); rotor.position.set(G.x + G.largo / 2 + 0.6, G.y, G.z); g.add(rotor);
-  const disco = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.12, 24), mat(0x9aa0a6, 0.7, 0.3)); disco.rotation.z = Math.PI / 2; rotor.add(disco);
+  const disco = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.12, 64), mat(0x9aa0a6, 0.7, 0.3)); disco.rotation.z = Math.PI / 2; rotor.add(disco);
   for (let k = 0; k < 8; k++) {                                                                 // las palas
     const p = new THREE.Group(); p.rotation.x = k * Math.PI / 4; rotor.add(p);
     caja(0.05, 0.28, 0.1, mat(0xb7bcc2, 0.7, 0.3), 0, 0.24, 0, p).rotation.y = 0.5;
@@ -113,9 +115,9 @@ export function crearPlanta() {
   // el tag, de lejos (los planos 2 y 5 ponen el de verdad)
   const tagSimple = caja(0.02, 0.0014, 0.084, mat(0x1F5A3E, 0.0, 0.5), TAG.pos.x, TAG.pos.y, TAG.pos.z);
   // al verla por dentro, la carcasa se desvanece y quedan sus aristas, encendidas, como en una radiografía
-  const contorno = new THREE.LineBasicMaterial({ color: new THREE.Color(0.55, 0.85, 1.4), transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
+  const contorno = matLinea({ color: new THREE.Color(0.55, 0.85, 1.4), opacity: 0, toneMapped: false });
   for (const [w, h, d, y] of [[L, alto - 0.16, D, 0.12 + (alto - 0.16) / 2], [L + 0.04, 0.04, D + 0.04, alto - 0.02]]) {
-    const l = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)), contorno); l.position.set(cx, y, cz); g.add(l);
+    const l = aristas(new THREE.BoxGeometry(w, h, d), contorno); l.position.set(cx, y, cz); g.add(l);
   }
   const verDentro = (k) => {
     carcasa.forEach((m) => {
@@ -145,7 +147,7 @@ export function crearPlanta() {
   const baliza = (x, y) => {                                                   // la baliza de la máquina: verde, ámbar, rojo
     caja(0.03, 0.25, 0.03, mat(0x2a2f35, 0.5, 0.4), x, y + 0.125, cz);
     const luces = [0x2EBD6B, 0xF2B01E, 0xD93030].map((c, i) => {
-      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.08, 16), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: i ? 0.25 : 1, toneMapped: false }));
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.08, 40), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: i ? 0.25 : 1, toneMapped: false }));
       m.position.set(x, y + 0.29 + i * 0.085, cz); g.add(m); return m;
     });
     return luces;
@@ -165,7 +167,7 @@ export function crearPlanta() {
   for (const [xa, xb] of cintas) {
     caja(xb - xa, 0.05, 0.42, mat(0x15171a, 0.1, 0.8), (xa + xb) / 2, yCinta, cz);                           // la banda
     for (let x = xa + 0.1; x < xb; x += 0.12) {                                                              // sus rodillos
-      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.44, 10), rodillo); r.rotation.x = Math.PI / 2; r.position.set(x, yCinta - 0.035, cz); g.add(r);
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.44, 24), rodillo); r.rotation.x = Math.PI / 2; r.position.set(x, yCinta - 0.035, cz); g.add(r);
     }
     for (const z of [cz - 0.23, cz + 0.23]) caja(xb - xa, 0.08, 0.03, mat(0x9aa0a6, 0.6, 0.35), (xa + xb) / 2, yCinta + 0.01, z);   // los bordes
     for (let x = xa + 0.3; x < xb - 0.2; x += 1.2) for (const z of [cz - 0.2, cz + 0.2]) caja(0.05, yCinta, 0.05, mat(0x2a2f35, 0.5, 0.4), x, yCinta / 2, z);   // patas
@@ -207,15 +209,15 @@ export function crearPlanta() {
   // la rejilla del ventilador, en el lateral derecho
   for (let k = 0; k < 7; k++) caja(0.006, 0.012, 0.2, mat(0x2a2f35, 0.3, 0.6), ax1 + e / 2 + 0.003, A.y + 0.6 + k * 0.025, amz);
   caja(0.006, 0.22, 0.24, mat(0x3a3f45, 0.3, 0.6), ax1 + e / 2 + 0.001, A.y + 0.675, amz);
-  const aristas = contorno.clone();
-  const filo = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(aw, ah, e)), aristas); filo.position.set(aw / 2, 0, 0); bisagra.add(filo);
+  const filos = matLinea({ color: new THREE.Color(0.55, 0.85, 1.4), opacity: 0, toneMapped: false });
+  const filo = aristas(new THREE.BoxGeometry(aw, ah, e), filos); filo.position.set(aw / 2, 0, 0); bisagra.add(filo);
   const verArmario = (k) => {
     puerta.forEach((m) => {
       if (m.transparent !== k > 0) { m.transparent = k > 0; m.needsUpdate = true; }
       m.opacity = 1 - k; m.depthWrite = k < 0.5;             // (del todo: con algo de chapa quedaba un velo)
     });
     hojas.forEach((o) => { o.castShadow = k < 0.3; o.visible = k < 0.99; });
-    aristas.opacity = 0.9 * Math.min(1, k * 1.6); aristas.visible = k > 0.01;
+    filos.opacity = 0.9 * Math.min(1, k * 1.6); filos.visible = k > 0.01;
   };
   verArmario(0);
   // delante del armario, en el suelo, la zona rayada que hay que dejar libre
@@ -244,14 +246,14 @@ export function crearPlanta() {
       V(lan.x - 0.02, 0.405, lan.z + 0.05), V(lan.x, lan.y - 0.03, lan.z + 0.008), lan], false, 'centripetal'),
   };
   const azul = mat(0x2E6FB0, 0.0, 0.5);
-  for (const c of [ethernet.lectorPLC, ethernet.plcEdge]) arm.grupo.add(new THREE.Mesh(new THREE.TubeGeometry(c, 160, 0.003, 8), azul));
+  for (const c of [ethernet.lectorPLC, ethernet.plcEdge]) arm.grupo.add(new THREE.Mesh(new THREE.TubeGeometry(c, 320, 0.003, 12), azul));
 
   // ---------------------------------------------------------------- la antena (plano 6), colgada del forjado, mirando al tag
   const ant = crearAntenaPanel(); ant.grupo.position.copy(ANTENA_POS); ant.grupo.lookAt(TAG.pos); g.add(ant.grupo);
   ant.grupo.updateMatrix();
   const detras = ant.detras.clone().applyMatrix4(ant.grupo.matrix), cara = ant.cara.clone().applyMatrix4(ant.grupo.matrix);
   const techo = OFICINA.y - 0.25;                                                               // la cara de abajo del forjado
-  const brazo = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, techo - detras.y, 12), mat(0x3A4046, 0.6, 0.35));
+  const brazo = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, techo - detras.y, 24), mat(0x3A4046, 0.6, 0.35));
   brazo.position.set(detras.x, (techo + detras.y) / 2, detras.z); g.add(brazo);
   caja(0.12, 0.01, 0.12, mat(0x3A4046, 0.6, 0.35), detras.x, techo - 0.005, detras.z);         // su pletina
   // el coaxial, del soporte al lector: por debajo del forjado hasta el pilar, pilar abajo, por el suelo hasta la espalda
@@ -270,11 +272,11 @@ export function crearPlanta() {
   // (en las esquinas del suelo la curva se pasaba y se metía en él: se remuestrea sin dejarla bajar de su radio)
   const coax = new THREE.CatmullRomCurve3(guia.getSpacedPoints(400).map((p) => p.setY(Math.max(p.y, suelo))), false, 'centripetal');
   coax.tramos = Math.ceil(coax.getLength() / 0.01);                                             // (un tramo por centímetro: el plano 6 lo enciende con los mismos, encima)
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(coax, coax.tramos, 0.005, 8), mat(0x1a1c1f, 0.1, 0.6)));
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(coax, coax.tramos, 0.005, 12), mat(0x1a1c1f, 0.1, 0.6)));
   caja(0.03, 0.03, 0.025, mat(0x15171a, 0.2, 0.6), bx, by, az0 - 0.015);                       // su prensaestopas, en el fondo
   // en el pilar, el extintor con su señal; en la pared del fondo, la salida; y un palé de cajas esperando
   const extintor = new THREE.Group(); extintor.position.set(px, 0, pz + 0.16); g.add(extintor);
-  const botella = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.48, 24), mat(0xc8102e, 0.2, 0.35)); botella.position.set(0.2, 0.55, 0.03); extintor.add(botella);
+  const botella = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.48, 64), mat(0xc8102e, 0.2, 0.35)); botella.position.set(0.2, 0.55, 0.03); extintor.add(botella);
   caja(0.05, 0.08, 0.05, mat(0x1d1f22, 0.4, 0.5), 0.2, 0.83, 0.03, extintor);
   caja(0.02, 0.3, 0.02, mat(0x1d1f22, 0.1, 0.6), 0.28, 0.6, 0.06, extintor);                    // la manguera
   caja(0.2, 0.04, 0.02, mat(0x2a2f35, 0.5, 0.4), 0.2, 0.86, -0.04, extintor);                   // su soporte
@@ -310,7 +312,7 @@ export function crearPlanta() {
   { const x0e = ox0 - 0.6, z0e = oz1 + 4.4, largo = Math.hypot(15 * 0.27, 16 * 0.2) + 0.4, ang = Math.atan2(16 * 0.2, 15 * 0.27);
     for (const dx of [-0.52, 0.52]) {
       const zanca = caja(0.05, 0.25, largo, mat(0x3a4048, 0.5, 0.5), x0e + dx, 1.55, z0e - 7 * 0.27, of); zanca.rotation.x = ang;   // las zancas
-      const baranda = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, largo, 10), mat(0xd6a52a, 0.3, 0.5));
+      const baranda = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, largo, 24), mat(0xd6a52a, 0.3, 0.5));
       baranda.rotation.x = Math.PI / 2 + ang; baranda.position.set(x0e + dx, 2.5, z0e - 7 * 0.27); of.add(baranda);           // la barandilla
       for (let k = 1; k < 16; k += 3) caja(0.025, 0.9, 0.025, mat(0x3a4048, 0.5, 0.5), x0e + dx, 0.1 + k * 0.2 + 0.55, z0e - k * 0.27, of);
     } }

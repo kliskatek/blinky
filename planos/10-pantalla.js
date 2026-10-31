@@ -9,7 +9,7 @@
 //   6.4-11.2 la rodea hasta verla de frente, y se acerca a la gorra (sigue el plano 11)
 
 import * as THREE from 'three';
-import { seg, smooth, smoother, bell, lerp, porTramos, porClaves, pasa, dialogo } from '../utiles.js';
+import { seg, smooth, smoother, bell, lerp, porTramos, porClaves, pasa, dialogo, cajaBisel } from '../utiles.js';
 import { crearMonitor, crearPersona, TARJETA_T } from '../piezas/sala.js';
 import { crearPlanta, OFICINA } from '../piezas/planta.js';
 import { madera, moqueta, teclado, conTexturas } from '../piezas/texturas.js';
@@ -32,7 +32,7 @@ export function montarSala(grupo) {
     luces.forEach((l) => grupo.add(l));
 
     const set = new THREE.Group(); set.scale.setScalar(S); grupo.add(set);
-    const caja = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); set.add(o); return o; };
+    const caja = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(cajaBisel(w, h, d, 0.006), m); o.position.set(x, y, z); set.add(o); return o; };
     const mat = (color, metal = 0.1, rug = 0.6) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rug });
     // la oficina de la entreplanta de la planta (piezas/planta.js): detrás de la persona, el frente de cristal y, abajo, la
     // planta (la máquina con su tag, la antena, los armarios), que se ve por él; la oficina de la planta se esconde

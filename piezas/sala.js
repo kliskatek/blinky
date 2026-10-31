@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { crearLogo } from './logo.js';
 import { L } from '../idioma.js';
+import { cajaBisel } from '../utiles.js';
 
 const V3 = THREE.Vector3;
 const mat = (color, metal = 0.1, rug = 0.6, o = {}) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rug, ...o });
@@ -20,11 +21,11 @@ function rect(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
 
 export function crearMonitor() {
   const g = new THREE.Group();
-  const marco = new THREE.Mesh(new THREE.BoxGeometry(SW + 0.03, SH + 0.03, 0.03), mat(0x14171b, 0.3, 0.5)); g.add(marco);
-  const cuello = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.03), mat(0x2a2f35, 0.5, 0.4)); cuello.position.set(0, -0.3, -0.03); g.add(cuello);
-  const pie = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.012, 0.18), mat(0x2a2f35, 0.5, 0.4)); pie.position.set(0, -0.36 - 0.0, 0.0); g.add(pie);
+  const marco = new THREE.Mesh(cajaBisel(SW + 0.03, SH + 0.03, 0.03, 0.004), mat(0x14171b, 0.3, 0.5)); g.add(marco);
+  const cuello = new THREE.Mesh(cajaBisel(0.05, 0.3, 0.03, 0.003), mat(0x2a2f35, 0.5, 0.4)); cuello.position.set(0, -0.3, -0.03); g.add(cuello);
+  const pie = new THREE.Mesh(cajaBisel(0.26, 0.012, 0.18, 0.003), mat(0x2a2f35, 0.5, 0.4)); pie.position.set(0, -0.36 - 0.0, 0.0); g.add(pie);
   const c = document.createElement('canvas'); c.width = PW; c.height = PH;
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 16;
   const pantalla = new THREE.Mesh(new THREE.PlaneGeometry(SW, SH), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
   pantalla.position.z = 0.0155; g.add(pantalla);
 
@@ -111,7 +112,7 @@ export function crearMonitor() {
 // ------------------------------------------------------------------ la persona
 // Sentada mirando a −z (al monitor). Origen en el suelo, bajo la silla.
 const cilindro = (a, b, r, m) => {
-  const d = b.clone().sub(a), o = new THREE.Mesh(new THREE.CapsuleGeometry(r, Math.max(0.001, d.length() - 2 * r), 6, 14), m);
+  const d = b.clone().sub(a), o = new THREE.Mesh(new THREE.CapsuleGeometry(r, Math.max(0.001, d.length() - 2 * r), 12, 28), m);
   o.position.copy(a).add(b).multiplyScalar(0.5); o.quaternion.setFromUnitVectors(new V3(0, 1, 0), d.normalize()); return o;
 };
 
@@ -121,33 +122,33 @@ export function crearPersona() {
   const cuerpoM = mat(0x1f5fa8, 0.0, 0.55), cabezaM = mat(0xf1e6da, 0.0, 0.5), gorraM = mat(0x16263c, 0.0, 0.6);
   // la silla, sencilla
   const silla = mat(0x23272d, 0.2, 0.6);
-  const asiento = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.06, 0.44), silla); asiento.position.set(0, 0.47, 0.02); g.add(asiento);
-  const respaldo = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.5, 0.05), silla); respaldo.position.set(0, 0.8, 0.24); respaldo.rotation.x = -0.12; g.add(respaldo);
-  const columna = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.42, 12), mat(0x9aa0a6, 0.7, 0.3)); columna.position.set(0, 0.24, 0.02); g.add(columna);
+  const asiento = new THREE.Mesh(cajaBisel(0.46, 0.06, 0.44, 0.015), silla); asiento.position.set(0, 0.47, 0.02); g.add(asiento);
+  const respaldo = new THREE.Mesh(cajaBisel(0.44, 0.5, 0.05, 0.015), silla); respaldo.position.set(0, 0.8, 0.24); respaldo.rotation.x = -0.12; g.add(respaldo);
+  const columna = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.42, 32), mat(0x9aa0a6, 0.7, 0.3)); columna.position.set(0, 0.24, 0.02); g.add(columna);
   // el cuerpo: una pieza de torno, de hombros redondos, como el muñeco de un icono; sin piernas
   const perfil = new THREE.SplineCurve([[0, 1.13], [0.1, 1.125], [0.175, 1.1], [0.208, 1.04], [0.212, 0.92], [0.198, 0.7], [0.19, 0.52], [0.0, 0.5]]
     .map(([x, y]) => new THREE.Vector2(x, y))).getPoints(40);
   perfil[0].x = 0; perfil[perfil.length - 1].x = 0;
-  const cuerpo = new THREE.Mesh(new THREE.LatheGeometry(perfil, 48), cuerpoM); cuerpo.scale.z = 0.78; cuerpo.position.z = 0.02; g.add(cuerpo);
+  const cuerpo = new THREE.Mesh(new THREE.LatheGeometry(perfil, 96), cuerpoM); cuerpo.scale.z = 0.78; cuerpo.position.z = 0.02; g.add(cuerpo);
   // los brazos, dos cápsulas hasta el teclado, sin manos
   for (const s of [-1, 1]) g.add(cilindro(new V3(s * 0.19, 1.0, 0.0), new V3(s * 0.13, 0.8, -0.45), 0.052, cuerpoM));
   // la cabeza, separada del cuerpo como en un icono (gira sobre su base, para asentir): ojos y sonrisa como los de
   // Blinky, y la gorra con su visera y el logo
   const cabeza = new THREE.Group(); cabeza.position.set(0, 1.18, -0.04); g.add(cabeza);
-  const craneo = new THREE.Mesh(new THREE.SphereGeometry(0.11, 40, 28), cabezaM); craneo.position.set(0, 0.15, 0); cabeza.add(craneo);
+  const craneo = new THREE.Mesh(new THREE.SphereGeometry(0.11, 80, 56), cabezaM); craneo.position.set(0, 0.15, 0); cabeza.add(craneo);
   const negro = new THREE.MeshBasicMaterial({ color: 0x0a0d14 }), blanco = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const ojos = [-1, 1].map((s) => {
-    const o = new THREE.Mesh(new THREE.CircleGeometry(1, 28).scale(0.014, 0.021, 1), negro);
-    const brillo = new THREE.Mesh(new THREE.CircleGeometry(0.0045, 12), blanco); brillo.position.set(0.004, 0.007, 0.0005); o.add(brillo);
+    const o = new THREE.Mesh(new THREE.CircleGeometry(1, 64).scale(0.014, 0.021, 1), negro);
+    const brillo = new THREE.Mesh(new THREE.CircleGeometry(0.0045, 24), blanco); brillo.position.set(0.004, 0.007, 0.0005); o.add(brillo);
     // por debajo del borde de la gorra, pegados a la esfera (cada uno girado como su normal)
     o.position.set(s * 0.0372, 0.1349, -0.1031); o.rotation.set(-0.14, Math.PI + s * 0.34, 0); cabeza.add(o); return o;
   });
-  const sonrisa = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.005, 8, 24, Math.PI), negro);
+  const sonrisa = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.005, 16, 48, Math.PI), negro);
   sonrisa.rotation.set(-0.42, Math.PI, Math.PI); sonrisa.position.set(0, 0.1056, -0.0984);   // (a ras de la esfera: más fuera, de perfil asomaban) cabeza.add(sonrisa);
-  const corona = new THREE.Mesh(new THREE.SphereGeometry(0.117, 40, 16, 0, Math.PI * 2, 0, Math.PI * 0.52), gorraM);
+  const corona = new THREE.Mesh(new THREE.SphereGeometry(0.117, 80, 32, 0, Math.PI * 2, 0, Math.PI * 0.52), gorraM);
   corona.position.set(0, 0.17, 0.0); cabeza.add(corona);
-  const boton = new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 8), gorraM); boton.position.set(0, 0.287, 0); cabeza.add(boton);
-  const visera = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.008, 32, 1, false, -Math.PI / 2, Math.PI), gorraM);
+  const boton = new THREE.Mesh(new THREE.SphereGeometry(0.012, 24, 16), gorraM); boton.position.set(0, 0.287, 0); cabeza.add(boton);
+  const visera = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.008, 64, 1, false, -Math.PI / 2, Math.PI), gorraM);
   visera.scale.set(1, 1, 1.15); visera.position.set(0, 0.185, -0.07); visera.rotation.set(-0.12, Math.PI, 0); cabeza.add(visera);
   // el logo de la gorra: 7 cm de ancho, en la frente de la corona, mirando a −z
   const logo = crearLogo(0.07 / 17.3, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.08, bevelSegments: 2, curveSegments: 1 });

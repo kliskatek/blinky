@@ -12,10 +12,12 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { VignetteShader } from 'three/addons/shaders/VignetteShader.js';
+import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { Electron } from './electron.js';
 import { crearEntorno } from './entorno.js';
 import { L, LANG, IDIOMAS, cambiarIdioma } from './idioma.js';
 import { crearSonido, grabarMusica } from './sonido.js';
+import { medirLineas } from './lineas.js';
 import plano01 from './planos/01-logo.js';
 import plano02 from './planos/02-tag.js';
 import plano03 from './planos/03-rocky.js';
@@ -75,15 +77,28 @@ comp.addPass(ao);
 const BLOOM = 0.55;
 const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), BLOOM, 0.5, 0.9);
 comp.addPass(bloom);
+// en el vídeo se pinta a ss veces el tamaño final (grabarVideo): lo que se mide en píxeles (el radio de la oclusión, su
+// filtro, el halo del bloom, el grosor de las líneas) va a esa escala, para que se vea igual que a tamaño final
+let ss = 1;
+const tamBloom = bloom.setSize.bind(bloom);
+bloom.setSize = (w, h) => tamBloom(Math.round(w / ss), Math.round(h / ss));
+function escalar(k) {
+  ss = k;
+  ao.gtaoMaterial.defines.SCREEN_SPACE_RADIUS_SCALE = 100 * k; ao.gtaoMaterial.needsUpdate = true;
+  ao.updatePdMaterial({ radius: 8 * k });
+}
 const vineta = new ShaderPass(VignetteShader);                 // las esquinas, algo más oscuras, como en una cámara
 vineta.uniforms.offset.value = 0.8; vineta.uniforms.darkness.value = 0.7;
 comp.addPass(vineta);
 comp.addPass(new OutputPass());
 
+let enVideo = false;                                       // (mientras se graba, el tamaño es el del vídeo: medir no lo toca)
 function medir() {
+  if (enVideo) return;
   const w = caja.clientWidth || 1, h = caja.clientHeight || 1;
   ren.setSize(w, h, false); comp.setSize(w, h);
   cam.aspect = w / h; cam.updateProjectionMatrix();
+  medirLineas(w * ren.getPixelRatio(), h * ren.getPixelRatio());
 }
 // el velo tapa todo el encuadre, sea cual sea el fov
 function taparVelo() {
@@ -225,35 +240,125 @@ if (Number.isNaN(enHash)) { sonido.mudo(true); corriendo = true; mostrarMando();
 else { ir(enHash, false); document.getElementById('cartela').hidden = true; if (/sigue/.test(location.hash)) corriendo = true; }
 pintarSonido(); pintarMando();
 
-// el corto en vídeo, para las redes (con corto/herramientas/video.py escuchando): cada cuadro, a su segundo de la
+// el corto en vídeo, para las redes (con corto/herramientas/video.py escuchando), con toda la calidad que en vivo no
+// cabe: cada cuadro se pinta a ss veces su tamaño (2: 3840 × 2160 para 1080) y se reduce, y es la media de sub
+// cuadros repartidos en el tiempo en que el obturador está abierto (obturador: la fracción del cuadro; 0,5, como una
+// cámara a 180°), cada uno con la cámara movida una fracción de píxel: desenfoque de movimiento y bordes, hilos y
+// letras limpios. Además, sombras de 4096 y más muestras en la oclusión ambiental. Cada cuadro, a su segundo de la
 // narración de este idioma, pintado entero (sin depender de lo que tarde) y mandado en crudo (RGBA, de abajo arriba; en
 // JPEG, el navegador tardaba casi un segundo por cuadro), en lotes, con un lote en camino mientras se pinta el siguiente;
-// antes, la mezcla de audio y los tiempos de las frases (para los subtítulos). Lo monta video.py
-async function grabarVideo({ fps = 30, ancho = 1920, alto = 1080, desde = 0, hasta = null, lote = 8, url = 'http://localhost:8795' } = {}) {
+// antes, la mezcla de audio y los tiempos de las frases (para los subtítulos). Lo monta video.py.
+// Para ver un cuadro así sin grabar: await corto.foto(s) (s, en segundos de la película) da la imagen en PNG.
+let desvio = null;                                         // la cámara, movida una fracción de píxel (en pintar)
+function calidadVideo(ancho, alto, k) {
+  corriendo = false; pintarMando(); enVideo = true;
+  escalar(k);
+  ren.setPixelRatio(1); ren.setSize(ancho * k, alto * k, false);
+  comp.setPixelRatio(1); comp.setSize(ancho * k, alto * k); cam.aspect = ancho / alto;
+  medirLineas(ancho * k, alto * k);
+  ao.updateGtaoMaterial({ samples: 32 }); ao.updatePdMaterial({ samples: 32, rings: 4 });
+  sombras(4096);
+  comp.renderToScreen = false;
+  const acum = new THREE.WebGLRenderTarget(ancho, alto, { type: THREE.FloatType, depthBuffer: false });
+  // suma: la media de los k × k píxeles de cada uno del cuadro final, con su peso; copia: al lienzo, con un tramado de
+  // medio nivel (en las penumbras y los halos, sin él se ven escalones)
+  const suma = new FullScreenQuad(new THREE.ShaderMaterial({
+    uniforms: { tex: { value: null }, peso: { value: 1 }, k: { value: k } },
+    vertexShader: 'void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: `uniform sampler2D tex; uniform float peso; uniform int k;
+      void main() { ivec2 o = ivec2(gl_FragCoord.xy) * k; vec3 c = vec3(0.0);
+        for (int j = 0; j < k; j++) for (int i = 0; i < k; i++) c += texelFetch(tex, o + ivec2(i, j), 0).rgb;
+        gl_FragColor = vec4(c * peso / float(k * k), 1.0); }`,
+    depthTest: false, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor,
+  }));
+  const copia = new FullScreenQuad(new THREE.ShaderMaterial({
+    uniforms: { tex: { value: acum.texture } },
+    vertexShader: 'void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: `uniform sampler2D tex;
+      float azar(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+      void main() { vec3 c = texelFetch(tex, ivec2(gl_FragCoord.xy), 0).rgb;
+        gl_FragColor = vec4(c + (azar(gl_FragCoord.xy) + azar(gl_FragCoord.yx + 0.37) - 1.0) / 255.0, 1.0); }`,
+    depthTest: false, depthWrite: false,
+  }));
+  // pinta el cuadro del segundo s del vídeo (T: de segundos del vídeo a segundos de la película) y lo deja en el lienzo,
+  // abajo a la izquierda, a ancho × alto
+  const cuadro = (s, T, { fps, sub, obturador }) => {
+    const tc = Math.min(TOTAL - 0.0005, T(s)), p = montados.find((x) => tc >= x.desde && tc < x.desde + x.dura) || montados[0];
+    ren.setRenderTarget(acum); ren.setClearColor(0x000000, 1); ren.clear();
+    for (let i = 0; i < sub; i++) {
+      const u = sub > 1 ? (i + 0.5) / sub - 0.5 : 0;
+      t = Math.min(p.desde + p.dura - 0.0005, Math.max(p.desde, T(s + u * obturador / fps)));   // (sin pasar al plano de al lado)
+      desvio = sub > 1 ? [halton(i + 1, 2) - 0.5, halton(i + 1, 3) - 0.5] : null;
+      pintar();
+      ren.setRenderTarget(acum); ren.autoClear = false;
+      suma.material.uniforms.tex.value = comp.readBuffer.texture; suma.material.uniforms.peso.value = 1 / sub;
+      suma.render(ren); ren.autoClear = true;
+    }
+    t = tc; desvio = null;
+    ren.setRenderTarget(null); ren.setViewport(0, 0, ancho, alto); copia.render(ren);
+  };
+  const acabar = () => {
+    acum.dispose(); suma.dispose(); copia.dispose();
+    comp.renderToScreen = true; desvio = null; cam.clearViewOffset();
+    ao.updateGtaoMaterial({ samples: 16 }); ao.updatePdMaterial({ samples: 16, rings: 2 });
+    sombras(2048); escalar(1); enVideo = false; ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5)); comp.setPixelRatio(ren.getPixelRatio()); medir();
+  };
+  return { cuadro, acabar };
+}
+const halton = (i, b) => { let f = 1, r = 0; for (; i > 0; i = Math.floor(i / b)) { f /= b; r += f * (i % b); } return r; };
+function sombras(n) {
+  montados.forEach((m) => { if (m.sol && m.sol.shadow.mapSize.x !== n) { m.sol.shadow.mapSize.set(n, n); m.sol.shadow.map?.dispose(); m.sol.shadow.map = null; } });
+}
+
+async function grabarVideo({ fps = 30, ancho = 1920, alto = 1080, ss: k = 2, sub = 8, obturador = 0.5, desde = 0, hasta = null, lote = 8, url = 'http://localhost:8795' } = {}) {
   const { T, S, voz } = await sonido.exportar(), fin = hasta ?? S(TOTAL);
-  corriendo = false; pintarMando();
   const S10 = Array.from({ length: Math.ceil(TOTAL * 10) + 1 }, (_, i) => +S(Math.min(TOTAL, i / 10)).toFixed(3));   // (para el tráiler: cada décima de la película, su segundo en el vídeo)
   await fetch(`${url}/tiempos.json`, { method: 'POST', body: JSON.stringify({ voz, dura: S(TOTAL), S10 }) });
   await fetch(`${url}/mezcla.wav`, { method: 'POST', body: await sonido.mezcla() });
-  ren.setPixelRatio(1); ren.setSize(ancho, alto, false); comp.setSize(ancho, alto); cam.aspect = ancho / alto;
+  const v = calidadVideo(ancho, alto, k);
   const gl = ren.getContext(), tam = ancho * alto * 4;
   await fetch(`${url}/empezar?fps=${fps}&w=${ancho}&h=${alto}`, { method: 'POST' });
   const t0 = performance.now(), n0 = Math.round(desde * fps), n1 = Math.ceil(fin * fps);
-  let buf = new Uint8Array(tam * lote), k = 0, enCamino = Promise.resolve();
+  let buf = new Uint8Array(tam * lote), j = 0, enCamino = Promise.resolve();
   const mandar = async (datos, n) => { await enCamino; enCamino = fetch(`${url}/cuadro?n=${n}`, { method: 'POST', body: datos }); };
-  for (let n = n0; n < n1; n++) {
-    t = Math.min(TOTAL - 0.0005, T(n / fps)); pintar();
-    gl.readPixels(0, 0, ancho, alto, gl.RGBA, gl.UNSIGNED_BYTE, buf.subarray(k * tam, (k + 1) * tam));   // (en la misma tarea en que se pinta)
-    if (++k === lote || n === n1 - 1) { await mandar(buf.subarray(0, k * tam), n); buf = new Uint8Array(tam * lote); k = 0; }
-    if (n % 300 === 0) console.info(`vídeo: ${n} / ${n1} cuadros (${((performance.now() - t0) / 1000 / Math.max(1, n - n0 + 1) * (n1 - n)).toFixed(0)} s para acabar)`);
-  }
-  await enCamino;
-  await fetch(`${url}/fin`, { method: 'POST' });
-  medir();
-  return `${n1 - n0} cuadros en ${((performance.now() - t0) / 1000).toFixed(0)} s`;
+  try {
+    for (let n = n0; n < n1; n++) {
+      v.cuadro(n / fps, T, { fps, sub, obturador });
+      gl.readPixels(0, 0, ancho, alto, gl.RGBA, gl.UNSIGNED_BYTE, buf.subarray(j * tam, (j + 1) * tam));   // (en la misma tarea en que se pinta)
+      if (++j === lote || n === n1 - 1) { await mandar(buf.subarray(0, j * tam), n); buf = new Uint8Array(tam * lote); j = 0; }
+      if (n % 300 === 0) console.info(`vídeo: ${n} / ${n1} cuadros (${((performance.now() - t0) / 1000 / Math.max(1, n - n0 + 1) * (n1 - n) / 60).toFixed(0)} min para acabar)`);
+    }
+    await enCamino;
+    await fetch(`${url}/fin`, { method: 'POST' });
+  } finally { v.acabar(); }
+  return `${n1 - n0} cuadros en ${((performance.now() - t0) / 60000).toFixed(1)} min`;
 }
 
-window.corto = { ir: (s) => ir(s, false), ver: (s) => { ir(s, false); pintar(); }, seguir: () => { corriendo = true; pintarMando(); }, get t() { return t; }, TOTAL, montados, cam, electron, ren, escena, comp, sonido, guion, grabarMusica, grabarVideo };
+// cuánto tarda cada cuadro del vídeo (n seguidos desde el segundo s de la película), para saber lo que va a tardar
+// (con la narración, el vídeo dura unas 1,35 veces la película)
+async function medirVideo(s = 60, n = 30, { ancho = 1920, alto = 1080, ss: k = 2, sub = 8, obturador = 0.5 } = {}) {
+  const v = calidadVideo(ancho, alto, k), gl = ren.getContext(), px = new Uint8Array(4);
+  try {
+    v.cuadro(s, (x) => x, { fps: 30, sub, obturador }); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);   // (el primero compila)
+    const t0 = performance.now();
+    for (let i = 1; i <= n; i++) { v.cuadro(s + i / 30, (x) => x, { fps: 30, sub, obturador }); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); }
+    const ms = (performance.now() - t0) / n;
+    return `${ms.toFixed(0)} ms por cuadro: unos ${(ms * TOTAL * 1.35 * 30 / 60000).toFixed(0)} min por idioma`;
+  } finally { v.acabar(); ir(s, false); }
+}
+
+// un cuadro con la calidad del vídeo, en PNG (s: segundo de la película; el desenfoque, como a 30 cuadros por segundo)
+async function foto(s, { ancho = 1920, alto = 1080, ss: k = 2, sub = 8, obturador = 0.5 } = {}) {
+  const v = calidadVideo(ancho, alto, k);
+  try {
+    v.cuadro(s, (x) => x, { fps: 30, sub, obturador });
+    const c = document.createElement('canvas'); c.width = ancho; c.height = alto;
+    c.getContext('2d').drawImage(ren.domElement, 0, alto * (k - 1), ancho, alto, 0, 0, ancho, alto);   // (lo pintado, abajo a la izquierda)
+    return await new Promise((r) => c.toBlob(r, 'image/png'));
+  } finally { v.acabar(); ir(s, false); }
+}
+
+window.corto = { ir: (s) => ir(s, false), ver: (s) => { ir(s, false); pintar(); }, seguir: () => { corriendo = true; pintarMando(); }, get t() { return t; }, TOTAL, montados, cam, electron, ren, escena, comp, sonido, guion, grabarMusica, grabarVideo, foto, medirVideo };
 
 // para preparar el sonido (audio/guion.json): recorre el corto sin pintarlo y apunta cuándo empieza y acaba cada frase
 // (en español, con su hueco hasta la siguiente), los destellos del velo, los cambios de forma de Blinky y los tramos
@@ -308,6 +413,7 @@ function cuadro(ahora) {
   sonido.seguir(t, corriendo);
   pintar();
 }
+const medida = new THREE.Vector2();
 // pinta el instante t; window.corto.ver(s) lo usa para revisar un segundo concreto sin esperar al siguiente cuadro
 function pintar() {
   const p =montados.find((x) => t >= x.desde && t < x.desde + x.dura) || montados[0];
@@ -323,6 +429,7 @@ function pintar() {
   electron.forma = 0; electron.sorpresa = 0; habla = null;
   p.m.actualizar(t - p.desde);
   if (window.camaraLibre) window.camaraLibre(cam);         // para revisar desde la consola: mover la cámara a mano
+  if (desvio) { const { width: w, height: h } = ren.getDrawingBufferSize(medida); cam.setViewOffset(w, h, desvio[0], desvio[1], w, h); }
   cam.updateMatrixWorld(); ajustarSombra(p);
   cam.updateProjectionMatrix(); taparVelo();
   electron.actualizar(t - p.desde, cam);

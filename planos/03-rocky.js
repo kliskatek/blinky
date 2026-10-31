@@ -18,17 +18,18 @@
 //   17-19.1 corre por la pista hasta la pata de MOSI del sensor y se queda pegado a ella; corte con destello al plano 4
 
 import * as THREE from 'three';
-import { seg, smooth, smoother, bell, lerp, rng, porTramos, porClaves, dialogo, pasa } from '../utiles.js';
+import { seg, smooth, smoother, bell, lerp, rng, porTramos, porClaves, dialogo, pasa, cajaBisel } from '../utiles.js';
 import { crearRocky, QFN, crearPista } from '../piezas/rocky.js';
 import { TAM_FINAL, PLANO_FINAL, ESCALA_CHIP } from './02-tag.js';
+import { montarPlaca, SENSOR, PLACA_CERCA, RECORTE_CERCA } from '../piezas/placa.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 // el último encuadre, que copia el plano 4 a su escala (como el 3 copia el del 2): el electrón pegado a la pata de MOSI
 // del sensor, la cámara detrás (corre hacia +x), por encima y a un lado
-export const TAM_FINAL3 = 0.3, PLANO_FINAL3 = V(-1.0, 0.6, 0.85), ESCALA_SENSOR = 2.2;
+export const TAM_FINAL3 = 0.3, PLANO_FINAL3 = V(-1.0, 0.6, 0.85), ESCALA_SENSOR = SENSOR.w;
 // y la vuelta (del plano 4 al 5): el electrón saliendo por la pata de MISO del sensor hacia −x, la cámara por delante
 // de él (−x), por fuera del encapsulado: detrás, el encapsulado lo tapaba
-export const PLANO_VUELTA = V(-1.0, 0.6, 0.85), XS_SENSOR = 12.6;
+export const PLANO_VUELTA = V(-1.0, 0.6, 0.85), XS_SENSOR = SENSOR.x;
 const K = QFN.W / ESCALA_CHIP;                         // cuánto más grande es aquí el chip que en el plano 2
 const TAM0 = TAM_FINAL * K;                             // el electrón, a la misma escala frente al chip que al final del 2
 const ALTO = 0.04;                                      // el electrón (tam 0,3) va un poco por encima de lo que pisa
@@ -58,19 +59,6 @@ const LINEAS = [
   [14.6, 17.3, 'El chip me manda al sensor por SPI: ¡a por la temperatura!'],
 ].map(([a, b, txt]) => [real(a), real(b), txt]);
 
-// el marcado del sensor (inventado): un sensor digital de temperatura
-function marcadoSensor() {
-  const c = document.createElement('canvas'); c.width = c.height = 512;
-  const g = c.getContext('2d');
-  g.fillStyle = '#1b1e22'; g.fillRect(0, 0, 512, 512);
-  g.fillStyle = '#a3abb2'; g.textAlign = 'center';
-  g.font = '700 70px Oxanium, "Segoe UI", sans-serif'; g.fillText('TEMP', 256, 230);
-  g.font = '600 50px Oxanium, "Segoe UI", sans-serif'; g.fillText('SENSOR', 256, 310);
-  g.beginPath(); g.arc(70, 440, 22, 0, Math.PI * 2); g.fillStyle = '#2b3035'; g.fill();
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
 const linea = (pts) => { const c = new THREE.CurvePath(); for (let i = 1; i < pts.length; i++) c.add(new THREE.LineCurve3(pts[i - 1], pts[i])); return c; };
 const alzar = (curva, dy) => new THREE.CatmullRomCurve3(curva.points.map((p) => p.clone().add(V(0, dy, 0))));
 
@@ -90,30 +78,14 @@ export default {
     const { padEn, hilos, patas, yCara } = rk;
     const yPlaca = -QFN.H / 2 - 0.01;
 
-    // la placa y las dos pistas: la de la antena llega por la izquierda a RF+, la del sensor sale por la derecha de MOSI
-    const placa = new THREE.Mesh(new THREE.BoxGeometry(30, 0.02, 18), new THREE.MeshStandardMaterial({ color: 0x1F5A3E, roughness: 0.45 }));
-    placa.position.y = yPlaca - 0.01; grupo.add(placa);
+    // la placa del tag (piezas/placa.js: la misma que se ve entera en el plano 2), a esta escala: la antena llega por la
+    // izquierda a RF+ y RF−; por la derecha sale el bus SPI hacia el sensor (MOSI le entra por su pata 1 y MISO vuelve
+    // por la 2 a la pata d3 del ROCKY100); alrededor, la alimentación con sus condensadores, las vías y la serigrafía
     const cobre = new THREE.MeshStandardMaterial({ color: 0xE0B455, metalness: 0.6, roughness: 0.3, emissive: 0x3A2A00, emissiveIntensity: 1 });
     const zRF = patas.i0.enCanto.z, zMOSI = patas.d2.enCanto.z, yCu = yPlaca + 0.012;
-    // el sensor, al final de la pista de MOSI: un DFN-8 (4 patas por lado, cada 0,5); MOSI le entra por su pata 1 y
-    // MISO sale por la 2, de vuelta a la pata d3 del ROCKY100
-    const XS = XS_SENSOR, S2 = ESCALA_SENSOR / 2, zS = zMOSI + 0.25, zMISO = zMOSI + 0.5;
-    const pista = (pts) => grupo.add(crearPista(pts, yCu, 0.32, cobre));
-    pista([[-15, zRF], [-3.1, zRF]]);
-    pista([[3.1, zMOSI], [XS - S2 - 0.03, zMOSI]]);
-    // la de MISO baja de la pata d3 a la altura del sensor con un quiebro a 45°
-    const zD3 = patas.d3.enCanto.z;
-    pista([[3.1, zD3], [4.2, zD3], [4.2 + (zD3 - zMISO), zMISO], [XS - S2 - 0.03, zMISO]]);
-    const sensor = new THREE.Mesh(new THREE.BoxGeometry(ESCALA_SENSOR, 0.55, ESCALA_SENSOR),
-      [0, 1, 2, 3, 4, 5].map((i) => (i === 2 ? new THREE.MeshStandardMaterial({ map: marcadoSensor(), roughness: 0.6 }) : new THREE.MeshStandardMaterial({ color: 0x1b1f23, roughness: 0.62 }))));
-    sensor.position.set(XS, yPlaca + 0.275, zS); grupo.add(sensor);
-    const plata = new THREE.MeshStandardMaterial({ color: 0xbfc6cc, metalness: 0.72, roughness: 0.28 });
-    const patasS = [];
-    for (const s of [-1, 1]) for (let k = 0; k < 4; k++) {
-      const p = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.12, 0.23), plata.clone());
-      p.position.set(XS + s * (S2 + 0.015), yPlaca + 0.06, zS + (k - 1.5) * 0.5); grupo.add(p);
-      if (s < 0) patasS.push(p);
-    }
+    const XS = XS_SENSOR, S2 = ESCALA_SENSOR / 2;
+    const capa = new THREE.Group(); capa.position.y = yPlaca; grupo.add(capa);
+    const { patasS } = montarPlaca(capa, { cobre, placa: PLACA_CERCA, recorte: RECORTE_CERCA });
 
     // los tramos de la ruta
     const yE = yCu + ALTO, W2 = QFN.W / 2;
@@ -149,7 +121,7 @@ export default {
     // digital y los dos bond wires
     const matLuz = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.35, 0.75, 1.6), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
     const tubo = (uv, [t0, t1], ease = smoother) => {
-      const geo = new THREE.TubeGeometry(linea(enDie(uv).map((p) => p.setY(yCara + 0.006))), 480, 0.011, 6);
+      const geo = new THREE.TubeGeometry(linea(enDie(uv).map((p) => p.setY(yCara + 0.006))), 480, 0.011, 10);
       grupo.add(new THREE.Mesh(geo, matLuz));
       const n = geo.index.count;
       return (t) => geo.setDrawRange(0, Math.floor(n * ease(seg(t, t0, t1)) / 6) * 6);

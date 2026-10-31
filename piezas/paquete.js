@@ -49,10 +49,10 @@ export function crearPaquete() {
   const ojos = [-1, 1].map((s) => {
     const o = new THREE.Group();
     // sobre el cristal oscuro, con el blanco del ojo detrás (de electrón no lo necesitaba: el blanco era él)
-    const esclera = new THREE.Mesh(new THREE.CircleGeometry(1, 28), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.3, 1.6, 1.8), toneMapped: false }));
+    const esclera = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.3, 1.6, 1.8), toneMapped: false }));
     esclera.scale.set(0.085, 0.11, 1); esclera.position.z = -0.001;
-    const iris = new THREE.Mesh(new THREE.CircleGeometry(1, 28), negro); iris.scale.set(0.05, 0.07, 1);
-    const chispa = new THREE.Mesh(new THREE.CircleGeometry(1, 16), blanco); chispa.scale.setScalar(0.018); chispa.position.set(0.017, 0.025, 0.001);
+    const iris = new THREE.Mesh(new THREE.CircleGeometry(1, 64), negro); iris.scale.set(0.05, 0.07, 1);
+    const chispa = new THREE.Mesh(new THREE.CircleGeometry(1, 32), blanco); chispa.scale.setScalar(0.018); chispa.position.set(0.017, 0.025, 0.001);
     o.add(esclera, iris, chispa); o.position.set(s * 0.13, 0.27, 0.52); cuerpo.add(o);
     return o;
   });

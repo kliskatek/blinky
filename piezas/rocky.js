@@ -5,6 +5,7 @@
 // pata(lado, k) y dedo(lado, k): dónde está la pata en el canto del encapsulado y su dedo de oro por dentro.
 
 import * as THREE from 'three';
+import { cajaBisel } from '../utiles.js';
 
 // pads de la foto (u, v) con el lado del QFN y la pata (0-3) a la que va su hilo; null, sin hilo (de chip3d.js).
 // 'i' RF+ (1), RF− (4); 'a' VREGL, GLOAD, VDD, EV4; 'd' CS, SCK, MOSI, MISO; 'b' VSS, VBAT, VIO, RFU
@@ -26,7 +27,7 @@ export function crearRocky() {
   const matPlata = new THREE.MeshStandardMaterial({ color: 0xbfc6cc, metalness: 0.72, roughness: 0.28 });
   const matCuerpo = new THREE.MeshStandardMaterial({ color: 0x1b1f23, roughness: 0.62, metalness: 0.1 });
 
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(W, H, W), matCuerpo));
+  g.add(new THREE.Mesh(cajaBisel(W, H, W, 0.06), matCuerpo));
   const pad = new THREE.Mesh(new THREE.BoxGeometry(W - 0.5, 0.02, W - 0.5), new THREE.MeshStandardMaterial({ color: 0x2a2f34, roughness: 0.4, metalness: 0.5 }));
   pad.position.y = H / 2 + 0.01; g.add(pad);
 
@@ -37,10 +38,10 @@ export function crearRocky() {
   const patas = {};
   for (const lado of ['i', 'a', 'd', 'b']) for (let k = 0; k < 4; k++) {
     const [x, z, ax] = sitio(lado, k, W / 2);
-    const p = new THREE.Mesh(new THREE.BoxGeometry(ax ? 0.46 : 0.06, 0.3, ax ? 0.06 : 0.46), matPlata.clone());
+    const p = new THREE.Mesh(cajaBisel(ax ? 0.46 : 0.06, 0.3, ax ? 0.06 : 0.46, 0.012), matPlata.clone());
     p.position.set(x, -H / 2 + 0.15, z); g.add(p);
     const [fx, fz] = sitio(lado, k, E);
-    const d = new THREE.Mesh(new THREE.BoxGeometry(ax ? 0.34 : 0.5, 0.03, ax ? 0.5 : 0.34), matOro.clone());
+    const d = new THREE.Mesh(cajaBisel(ax ? 0.34 : 0.5, 0.03, ax ? 0.5 : 0.34, 0.008), matOro.clone());
     d.position.set(fx, H / 2 + 0.03, fz); g.add(d);
     patas[lado + k] = { pata: p, dedo: d, enCanto: new THREE.Vector3(x, H / 2 + 0.02, z), enDedo: new THREE.Vector3(fx, H / 2 + 0.05, fz) };
   }
@@ -49,10 +50,10 @@ export function crearRocky() {
   const yDie = H / 2 + 0.02;
   const lado = new THREE.MeshStandardMaterial({ color: 0x5d6670, metalness: 0.7, roughness: 0.35 });
   const cara = new THREE.MeshStandardMaterial({ color: 0x8899aa, roughness: 0.5, metalness: 0.1, emissive: 0xffffff, emissiveIntensity: 0.16 });
-  const die = new THREE.Mesh(new THREE.BoxGeometry(dw, alto, dh), [lado, lado, cara, lado, lado, lado]);
+  const die = new THREE.Mesh(cajaBisel(dw, alto, dh, 0.02), [lado, lado, cara, lado, lado, lado]);
   die.position.y = yDie + alto / 2; g.add(die);
   new THREE.TextureLoader().load('img/rocky100-textura.jpg', (tex) => {
-    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 16;
     cara.map = tex; cara.emissiveMap = tex; cara.color.set(0xffffff); cara.needsUpdate = true;
   });
   const yCara = yDie + alto;
@@ -64,7 +65,7 @@ export function crearRocky() {
     if (k === null) continue;
     const a = padEn(u, v), b = patas[l + k].enDedo.clone().setY(H / 2 + 0.035);   // (metido en el dedo: si no, de cerca se le veía la boca)
     const curva = new THREE.CatmullRomCurve3([a, new THREE.Vector3(a.x + (b.x - a.x) * 0.22, a.y + 0.3, a.z + (b.z - a.z) * 0.22), b]);
-    const m = new THREE.Mesh(new THREE.TubeGeometry(curva, 32, 0.016, 6), matOro.clone());
+    const m = new THREE.Mesh(new THREE.TubeGeometry(curva, 64, 0.016, 12), matOro.clone());
     g.add(m);
     hilos[l + k] = { curva, malla: m };
   }
@@ -75,14 +76,14 @@ export function crearRocky() {
 // Una pista de cobre de la placa: [[x, z], ...] en el plano y, con el ancho dado. Cada tramo mide justo lo que hay entre
 // sus dos puntos y en cada punto va un disco (unión y extremos redondos, como en un PCB): alargar los tramos para que
 // se tocaran dejaba esquinas sueltas en los quiebros.
-export function crearPista(pts, y, ancho, material) {
-  const g = new THREE.Group(), grueso = 0.012;
+export function crearPista(pts, y, ancho, material, grueso = 0.012) {
+  const g = new THREE.Group();
   for (let i = 1; i < pts.length; i++) {
     const [x0, z0] = pts[i - 1], [x1, z1] = pts[i];
     const m = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x1 - x0, z1 - z0), grueso, ancho), material);
     m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); m.rotation.y = -Math.atan2(z1 - z0, x1 - x0); g.add(m);
   }
-  const disco = new THREE.CylinderGeometry(ancho / 2, ancho / 2, grueso, 32);
+  const disco = new THREE.CylinderGeometry(ancho / 2, ancho / 2, grueso, 48);
   pts.forEach(([x, z]) => { const d = new THREE.Mesh(disco, material); d.position.set(x, y, z); g.add(d); });
   return g;
 }

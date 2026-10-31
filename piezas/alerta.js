@@ -17,7 +17,7 @@ function triangulo() {
     s.quadraticCurveTo(p.x, p.y, p1.x, p1.y);
   });
   s.closePath();
-  const g = new THREE.ExtrudeGeometry(s, { depth: 0.14, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3, curveSegments: 10 });
+  const g = new THREE.ExtrudeGeometry(s, { depth: 0.14, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 6, curveSegments: 24 });
   g.translate(0, 0, -0.07);
   return g;
 }
@@ -30,21 +30,21 @@ export function crearAlerta() {
   const Z = 0.125;                                                        // la cara de delante (con el bisel)
   const blanco = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 1.45, 1.4), toneMapped: false });
   // la admiración
-  const palo = new THREE.Mesh(new THREE.CapsuleGeometry(0.036, 0.17, 4, 12), blanco); palo.position.set(0, 0.27, Z); cuerpo.add(palo);
-  const punto = new THREE.Mesh(new THREE.CircleGeometry(0.042, 20), blanco); punto.position.set(0, 0.06, Z); cuerpo.add(punto);
+  const palo = new THREE.Mesh(new THREE.CapsuleGeometry(0.036, 0.17, 8, 24), blanco); palo.position.set(0, 0.27, Z); cuerpo.add(palo);
+  const punto = new THREE.Mesh(new THREE.CircleGeometry(0.042, 40), blanco); punto.position.set(0, 0.06, Z); cuerpo.add(punto);
   // los ojos, como los del paquete
   const negro = new THREE.MeshBasicMaterial({ color: 0x0a0d14 }), brilloOjo = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
   const ojos = [-1, 1].map((s) => {
     const o = new THREE.Group();
-    const esclera = new THREE.Mesh(new THREE.CircleGeometry(1, 28), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.3, 1.25, 1.25), toneMapped: false }));
+    const esclera = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.3, 1.25, 1.25), toneMapped: false }));
     esclera.scale.set(0.068, 0.085, 1); esclera.position.z = -0.001;
-    const iris = new THREE.Mesh(new THREE.CircleGeometry(1, 28), negro); iris.scale.set(0.04, 0.055, 1);
-    const chispa = new THREE.Mesh(new THREE.CircleGeometry(1, 16), brilloOjo); chispa.scale.setScalar(0.014); chispa.position.set(0.014, 0.02, 0.001);
+    const iris = new THREE.Mesh(new THREE.CircleGeometry(1, 64), negro); iris.scale.set(0.04, 0.055, 1);
+    const chispa = new THREE.Mesh(new THREE.CircleGeometry(1, 32), brilloOjo); chispa.scale.setScalar(0.014); chispa.position.set(0.014, 0.02, 0.001);
     o.add(esclera, iris, chispa); o.position.set(s * 0.15, -0.1, Z); cuerpo.add(o);
     return o;
   });
   // la sonrisa (solo cuando le gusta)
-  const sonrisa = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.013, 8, 24, Math.PI), negro);
+  const sonrisa = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.013, 16, 48, Math.PI), negro);
   sonrisa.rotation.z = Math.PI; sonrisa.position.set(0, -0.2, Z + 0.002); cuerpo.add(sonrisa);
   // el halo, detrás, y la luz
   const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaPunto(), color: new THREE.Color(1.6, 0.18, 0.12), transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }));

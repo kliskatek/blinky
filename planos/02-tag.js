@@ -81,7 +81,7 @@ export function montarTag(grupo) {
   const zA = W(0, 0, TAG.zDipolo).z, xF = W(TAG.feed, 0, 0).x, zF = W(0, 0, TAG.zFeed).z - 0.02, zB = W(0, 0, TAG.zBobina).z;
   const R = TAG.rocky;
   const PATA = { lado: 'a', k: 3 };                                // la pata del lado de la antena que cae junto a la alimentación
-  const pata = W(R.x + (PATA.k - 1.5) * 0.045, 0.2, R.z - R.w / 2 - 0.004).add(V(0, 0, 0.03));
+  const pata = W(R.x + (PATA.k - 1.5) * TAG.paso, 0.2, R.z - R.w / 2 - 0.004).add(V(0, 0, 0.03));
   // (el tag, de cerca, con todo el reflejo del entorno brillaba demasiado; la planta, de lejos, lo lleva entero)
   tag.grupo.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { m.envMapIntensity = 0.4; }); });
   return { tag, W, yPista, zA, xF, zF, zB, pata, PATA, planta };
@@ -251,7 +251,7 @@ export default {
     for (const sg of [-1, 1]) for (const signo of [1, -1]) {
       const pts = [];
       for (let i = 0; i <= 60; i++) { const x = sg * (0.06 + (LA - 0.06) * i / 60); pts.push(V(x, HB * env(x), zC)); }
-      const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 120, 0.006, 6), matLinea());
+      const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 240, 0.006, 10), matLinea());
       m.userData.signo = signo; grupo.add(m); envolvente.push(m);
     }
     const ejeCampo = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 2 * LA, 6).rotateZ(Math.PI / 2), matLinea()); grupo.add(ejeCampo);   // el cero

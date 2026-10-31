@@ -17,12 +17,13 @@
 //           empieza el plano 6
 
 import * as THREE from 'three';
-import { seg, smooth, smoother, bell, lerp, rng, porTramos, porClaves, texturaPunto, dialogo, pasa } from '../utiles.js';
+import { seg, smooth, smoother, bell, lerp, rng, porTramos, porClaves, texturaPunto, dialogo, pasa, cajaBisel } from '../utiles.js';
 import { crearRocky, QFN, crearPista } from '../piezas/rocky.js';
 import { Electron } from '../electron.js';
 import { montarTag, enPlanta, dirEnPlanta, TAM_FINAL, PLANO_FINAL, ESCALA_CHIP } from './02-tag.js';
 import { ANTENA_POS } from '../piezas/planta.js';
 import { PLANO_VUELTA, XS_SENSOR, ESCALA_SENSOR } from './03-rocky.js';
+import { montarPlaca, PLACA_CERCA, RECORTE_CERCA } from '../piezas/placa.js';
 
 // la cámara detrás del electrón en vuelo, en su dirección de marcha: así acaba este plano y así empieza el 6
 export const TRAS_VUELO = { atras: -4.5, arriba: 1.4, lado: 1.6, delante: 3, fov: 34 };
@@ -72,24 +73,13 @@ export default {
     const rk = crearRocky(); A.add(rk.grupo);
     const { padEn, hilos, patas, yCara } = rk;
     const W2 = QFN.W / 2, yPlaca = -QFN.H / 2 - 0.01, yCu = yPlaca + 0.012, yE = yCu + ALTO;
-    const placa = new THREE.Mesh(new THREE.BoxGeometry(30, 0.02, 18), new THREE.MeshStandardMaterial({ color: 0x1F5A3E, roughness: 0.45 }));
-    placa.position.y = yPlaca - 0.01; A.add(placa);
+    // la placa del tag (piezas/placa.js), como en el plano 3: el electrón sale de la pata de MISO del sensor (donde lo
+    // dejó el plano 4)
     const cobre = new THREE.MeshStandardMaterial({ color: 0xE0B455, metalness: 0.6, roughness: 0.3, emissive: 0x3A2A00, emissiveIntensity: 1 });
     const zRF = patas.i0.enCanto.z, zD3 = patas.d3.enCanto.z, zMISO = patas.d2.enCanto.z + 0.5;
-    const pista = (pts) => A.add(crearPista(pts, yCu, 0.32, cobre));
-    // el sensor, cerrado, como en el plano 3: el electrón sale de su pata de MISO (donde lo dejó el plano 4)
-    const XS = XS_SENSOR, S2 = ESCALA_SENSOR / 2, zMOSI = patas.d2.enCanto.z, zS = zMOSI + 0.25;
-    pista([[-15, zRF], [-3.1, zRF]]);
-    pista([[3.1, zMOSI], [XS - S2 - 0.03, zMOSI]]);
-    const xQuiebro = 4.2 + (zD3 - zMISO);                                // la de MISO, con el quiebro a 45° (como en el plano 3)
-    pista([[3.1, zD3], [4.2, zD3], [xQuiebro, zMISO], [XS - S2 - 0.03, zMISO]]);
-    const sensor = new THREE.Mesh(new THREE.BoxGeometry(ESCALA_SENSOR, 0.55, ESCALA_SENSOR), new THREE.MeshStandardMaterial({ color: 0x1b1f23, roughness: 0.62 }));
-    sensor.position.set(XS, yPlaca + 0.275, zS); A.add(sensor);
-    const plata = new THREE.MeshStandardMaterial({ color: 0xbfc6cc, metalness: 0.72, roughness: 0.28 });
-    const patasS = [0, 1, 2, 3].map((k) => {
-      const p = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.12, 0.23), plata.clone());
-      p.position.set(XS - S2 - 0.015, yPlaca + 0.06, zS + (k - 1.5) * 0.5); A.add(p); return p;
-    });
+    const XS = XS_SENSOR, S2 = ESCALA_SENSOR / 2, xQuiebro = 4.2 + (zD3 - zMISO);   // (el quiebro a 45° de la pista de MISO)
+    const capa = new THREE.Group(); capa.position.y = yPlaca; A.add(capa);
+    const { patasS } = montarPlaca(capa, { cobre, placa: PLACA_CERCA, recorte: RECORTE_CERCA });
     const INICIO_V = V(XS - S2 - 0.03 - 0.036 - 0.004, yE, zMISO);       // pegado a la pata de MISO, por fuera
 
     const llega = linea([INICIO_V, V(xQuiebro, yE, zMISO), V(4.2, yE, zD3), V(W2 + 0.1, yE, zD3), V(W2 + 0.04, QFN.H / 2 + ALTO, zD3), patas.d3.enDedo.clone().add(V(0, ALTO, 0))]);
@@ -107,7 +97,7 @@ export default {
     const tamA = (t) => lerp(0.3, TAM0, smoother(seg(t, 9.4, 10.9)));
     const rutaA = (t) => { const de = 0.12 * (tamA(t) - 0.3); return baseA(t).add(V(-de, de, 0)); };   // como en el plano 3
     // la pista del die, encendida en rojo por donde pasa
-    const geoLuz = new THREE.TubeGeometry(linea(DIE_VUELTA.map(([u, v]) => padEn(u, v).setY(yCara + 0.006))), 400, 0.011, 6);
+    const geoLuz = new THREE.TubeGeometry(linea(DIE_VUELTA.map(([u, v]) => padEn(u, v).setY(yCara + 0.006))), 400, 0.011, 10);
     A.add(new THREE.Mesh(geoLuz, new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 0.45, 0.12), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false })));
     hilos.d3.malla.material.emissive = new THREE.Color(0xff5a1a);
     hilos.i0.malla.material.emissive = new THREE.Color(0xff5a1a);
@@ -171,7 +161,7 @@ export default {
     // los frentes de backscatter: casquetes naranjas que salen del dipolo hacia el lector
     const frentes = [];
     for (let i = 0; i < 5; i++) {
-      const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.02, 8, 64, 1.6).rotateZ(-0.8),
+      const m = new THREE.Mesh(new THREE.TorusGeometry(1, 0.02, 12, 128, 1.6).rotateZ(-0.8),
         new THREE.MeshBasicMaterial({ color: 0xff8000, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
       const g = new THREE.Group(); g.position.copy(centro); g.quaternion.setFromUnitVectors(V(1, 0, 0), DIR);
       for (let k = 0; k < 3; k++) { const c = m.clone(); c.rotation.x = k * Math.PI / 3; g.add(c); }

@@ -9,13 +9,14 @@ import * as THREE from 'three';
 import { cartel } from './cartel.js';
 import { cajaRedonda } from './tag.js';
 import { pintura, cepillado, conTexturas } from './texturas.js';
+import { cajaBisel } from '../utiles.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const mat = (color, metal = 0.3, rug = 0.5, o = {}) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rug, ...o });
 
 export function crearEdge() {
   const g = new THREE.Group();
-  const caja = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); g.add(o); return o; };
+  const caja = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(cajaBisel(w, h, d, 0.0015), m); o.position.set(x, y, z); g.add(o); return o; };
   const cuerpo = new THREE.Mesh(cajaRedonda(0.2, 0.05, 0.14, 0.012, 0.004), conTexturas(mat(0x2b3036, 0.4, 0.9), pintura(), 1, 1)); cuerpo.position.y = 0.025; g.add(cuerpo);
   // las aletas, en la mitad izquierda
   const aletas = [];

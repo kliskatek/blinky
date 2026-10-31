@@ -7,6 +7,7 @@
 
 import * as THREE from 'three';
 import { galvanizado, pintura, conTexturas, etiqueta } from './texturas.js';
+import { cajaBisel } from '../utiles.js';
 
 const V3 = THREE.Vector3;
 // los mazos del fondo: x en la placa y cuántos hilos; bajan a sus prensaestopas del suelo del armario (y -0,09 su boca)
@@ -17,7 +18,7 @@ const mat = (color, metal = 0.2, rug = 0.55, o = {}) => new THREE.MeshStandardMa
 
 export function crearArmario() {
   const g = new THREE.Group();
-  const caja = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); g.add(o); return o; };
+  const caja = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(cajaBisel(w, h, d, 0.002), m); o.position.set(x, y, z); g.add(o); return o; };
 
   // placa de montaje (galvanizada), carril DIN (con sus ranuras) y canaleta (con sus peines y su tapa)
   caja(1.5, 0.95, 0.02, conTexturas(mat(0x8a9097, 0.6, 1), galvanizado(), 9, 6), 0.05, 0.5, -0.01);
@@ -90,20 +91,20 @@ export function crearArmario() {
     const tope = new THREE.Box3().setFromObject(s).max.y - 0.002;          // (el cable sale de lo alto de cada uno, que no miden igual)
     const m = mods[n], borne = new V3(m.x - m.w * 0.3, Y - 0.045, ZF + 0.006), arriba = new V3(sx, tope, 0.22);
     const curva = new THREE.CatmullRomCurve3([arriba, new V3(sx, tope + 0.02, 0.2), new V3((sx + borne.x) / 2, 0.36, 0.13), borne.clone().add(new V3(0, -0.02, 0.01)), borne]);
-    g.add(new THREE.Mesh(new THREE.TubeGeometry(curva, 60, 0.0022, 6), negro));
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(curva, 120, 0.0022, 10), negro));
     sensores.push({ n, curva });
   };
   sensor('di', -0.12, (s) => {                                        // inductivo M18, con su LED
-    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.06, 20), metal); b.position.y = 0.04; s.add(b);
-    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.0095, 0.006, 20), new THREE.MeshBasicMaterial({ color: 0xF2B01E })); l.position.y = 0.072; s.add(l);
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.06, 40), metal); b.position.y = 0.04; s.add(b);
+    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.0095, 0.006, 40), new THREE.MeshBasicMaterial({ color: 0xF2B01E })); l.position.y = 0.072; s.add(l);
   });
   sensor('ai', 0.05, (s) => {                                         // transmisor de presión, con su hexágono
     const h = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.01, 6), metal); h.position.y = 0.012; s.add(h);
-    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.05, 20), metal); b.position.y = 0.042; s.add(b);
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.05, 40), metal); b.position.y = 0.042; s.add(b);
   });
   sensor('iol', 0.22, (s) => {                                        // fotoeléctrico IO-Link
-    const b = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.032, 0.014), negro); b.position.y = 0.03; s.add(b);
-    const o = new THREE.Mesh(new THREE.CircleGeometry(0.005, 16), new THREE.MeshBasicMaterial({ color: 0xD93030 })); o.position.set(0, 0.03, 0.0075); s.add(o);
+    const b = new THREE.Mesh(cajaBisel(0.02, 0.032, 0.014, 0.002), negro); b.position.y = 0.03; s.add(b);
+    const o = new THREE.Mesh(new THREE.CircleGeometry(0.005, 32), new THREE.MeshBasicMaterial({ color: 0xD93030 })); o.position.set(0, 0.03, 0.0075); s.add(o);
   });
 
   // el resto del cableado, el de verdad: alimentación (24 V: rojo y azul oscuro; 230 V: marrón, azul claro y la tierra,
@@ -116,7 +117,7 @@ export function crearArmario() {
   const mats = {};
   const hilo = (puntos, color, r = 0.0012) => {
     const m = mats[color] || (mats[color] = mat(COL[color], 0.0, 0.75));
-    g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(puntos), 24, r, 5), m));
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(puntos), 64, r, 10), m));
   };
   const CANAL_ABAJO = 0.362, CANAL_ARRIBA = 0.72, ZC = 0.03;
   // de un borne (x, y, z) a la canaleta de abajo o a la de arriba, con una curva
@@ -153,7 +154,7 @@ export function crearArmario() {
       hilo([p(0.3, ZC), p(0.22, ZC + 0.01), p(0.1, ZC + 0.05), p(-0.02, 0.13), p(-0.065, 0.178), p(-0.09, 0.185)], colores[k % colores.length], 0.0013);
     }
     for (const [y, z] of [[0.24, ZC + 0.008], [0.12, ZC + 0.045], [0.0, 0.115]]) {
-      const b = new THREE.Mesh(new THREE.TorusGeometry(0.0075, 0.0012, 4, 12), brida); b.position.set(x0, y, z); b.rotation.x = Math.PI / 2 - 0.3; g.add(b);
+      const b = new THREE.Mesh(new THREE.TorusGeometry(0.0075, 0.0012, 8, 32), brida); b.position.set(x0, y, z); b.rotation.x = Math.PI / 2 - 0.3; g.add(b);
     }
   }
 
