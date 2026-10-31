@@ -64,7 +64,7 @@ export class Electron {
         void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0);
           vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
       fragmentShader: `uniform vec3 color; varying vec3 vN; varying vec3 vV;
-        void main() { float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
+        void main() { float f = max(0.0, 1.0 - abs(dot(normalize(vN), normalize(vV))));
           gl_FragColor = vec4(color * pow(f, 2.2), 1.0); }`,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     });
@@ -82,7 +82,7 @@ export class Electron {
     // la cara: dos ojos ovalados con su brillo, en un grupo que mira hacia donde mira él. Se pintan los últimos (por
     // encima de la estela y del halo, que son aditivos y los aclararían), pero con prueba de profundidad: si mira de
     // lado, el ojo de atrás lo tapa el núcleo
-    this.cara = new THREE.Group(); this.cara.visible = cara; this.raiz.add(this.cara);
+    this.cara = new THREE.Group(); this.cara.visible = this.conCara = cara; this.raiz.add(this.cara);
     const negro = new THREE.MeshBasicMaterial({ color: 0x0a0d14, transparent: true });
     const blanco = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false, transparent: true });
     this.ojosM = [-1, 1].map((s) => {
@@ -185,8 +185,11 @@ export class Electron {
     const a = 1 + estira, b = 1 - 0.35 * estira, radio = 1 / Math.sqrt((c * c) / (a * a) + (1 - c * c) / (b * b));
     this.qOjo.copy(this.cara.quaternion).invert().multiply(this.qVa.copy(this.cara.quaternion).slerp(cam.quaternion, 0.6));
     const parpadeo = (t % 3.3) < 0.13 && this.sorpresa < 0.5 ? 0.12 : 1, abre = 1 + 0.35 * this.sorpresa;
+    // de espaldas a la cámara, los ojos (medio girados a ella) asomaban por encima del núcleo como orejas: se van
+    const frente = THREE.MathUtils.smoothstep(this.dir.dot(this.haciaCam), -0.35, 0.05);
+    this.cara.visible = this.conCara && frente > 0.01;
     this.ojosM.forEach((o, i) => {
-      o.scale.set(R * abre, R * abre * Math.max(0.06, this.ojos * parpadeo), R);
+      o.scale.set(R * abre * frente, R * abre * frente * Math.max(0.06, this.ojos * parpadeo), R);
       o.position.x = (i ? 1 : -1) * 0.4 * R + this.mirada.x * 0.22 * R * (1 - 0.6 * peso);
       o.position.y = (0.12 + 0.06 * this.sorpresa) * R + this.mirada.y * 0.18 * R * (1 - 0.6 * peso);
       o.position.z = R * (radio * 1.02 + 0.04);

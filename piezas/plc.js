@@ -9,6 +9,10 @@ import * as THREE from 'three';
 import { galvanizado, pintura, conTexturas, etiqueta } from './texturas.js';
 
 const V3 = THREE.Vector3;
+// los mazos del fondo: x en la placa y cuántos hilos; bajan a sus prensaestopas del suelo del armario (y -0,09 su boca)
+// la pantalla de la CPU antes de que llegue él (el plano 6 la deja así y el 7 empieza igual)
+export const PLC_REPOSO = [['PLC   RUN', '#2EBD6B'], ['RFID  ---', '#6f7a84'], ['PRES  2.41 bar', '#e8eef2'], ['PROX  1', '#e8eef2'], ['IO-L  63 %', '#e8eef2']];
+export const MAZOS = [[-0.46, 7], [-0.36, 6], [0.5, 8]];
 const mat = (color, metal = 0.2, rug = 0.55, o = {}) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rug, ...o });
 
 export function crearArmario() {
@@ -83,8 +87,9 @@ export function crearArmario() {
   const sensor = (n, sx, cuerpo) => {
     // un poco más grandes que de verdad (× 1,8), para que se lean en el plano general
     const s = new THREE.Group(); s.position.set(sx, 0.125, 0.22); s.scale.setScalar(1.8); g.add(s); cuerpo(s);
-    const m = mods[n], borne = new V3(m.x - m.w * 0.3, Y - 0.045, ZF + 0.006), arriba = new V3(sx, 0.26, 0.22);
-    const curva = new THREE.CatmullRomCurve3([arriba, new V3(sx, 0.28, 0.2), new V3((sx + borne.x) / 2, 0.36, 0.13), borne.clone().add(new V3(0, -0.02, 0.01)), borne]);
+    const tope = new THREE.Box3().setFromObject(s).max.y - 0.002;          // (el cable sale de lo alto de cada uno, que no miden igual)
+    const m = mods[n], borne = new V3(m.x - m.w * 0.3, Y - 0.045, ZF + 0.006), arriba = new V3(sx, tope, 0.22);
+    const curva = new THREE.CatmullRomCurve3([arriba, new V3(sx, tope + 0.02, 0.2), new V3((sx + borne.x) / 2, 0.36, 0.13), borne.clone().add(new V3(0, -0.02, 0.01)), borne]);
     g.add(new THREE.Mesh(new THREE.TubeGeometry(curva, 60, 0.0022, 6), negro));
     sensores.push({ n, curva });
   };
@@ -117,7 +122,7 @@ export function crearArmario() {
   // de un borne (x, y, z) a la canaleta de abajo o a la de arriba, con una curva
   const aCanal = (x, y, z, color, arriba = false, dx = 0) => {
     const yc = arriba ? CANAL_ARRIBA : CANAL_ABAJO, s = arriba ? 1 : -1;
-    hilo([new V3(x, y, z), new V3(x, y + s * 0.012, z + 0.004), new V3(x + dx * 0.5, (y + yc) / 2, (z + ZC) / 2 + 0.01), new V3(x + dx, yc + s * 0.004, ZC), new V3(x + dx, yc - s * 0.01, ZC)], color);
+    hilo([new V3(x, y, z), new V3(x, y + s * 0.012, z + 0.004), new V3(x + dx * 0.5, (y + yc) / 2, (z + ZC) / 2 + 0.01), new V3(x + dx, yc - s * 0.01, ZC), new V3(x + dx, yc + s * 0.004, ZC)], color);   // (entra en la canaleta: antes acababa volviendo sobre sí)
   };
   const alto = Y + 0.0625, bajo = Y - 0.0625;
   // la fuente: 230 V abajo (fase, neutro, tierra) y 24 V arriba, a repartir
@@ -139,13 +144,13 @@ export function crearArmario() {
   aCanal(-0.4, 0.432, 0.02, 'gris', false, 0.01); aCanal(-0.392, 0.432, 0.02, 'gris', false, 0.012);
   aCanal(0.3, 0.452, 0.02, 'rojo', false, 0.01); aCanal(0.306, 0.452, 0.02, 'azulOsc', false, 0.012);
   // los mazos, de la canaleta de abajo a los prensaestopas del suelo del armario, con sus bridas
-  const brida = mat(0xe8e6df, 0, 0.6);
-  for (const [x0, n] of [[-0.46, 7], [-0.36, 6], [0.5, 8]]) {
+  const brida = mat(0xe8e6df, 0, 0.6);   // (acaban en lo alto de su prensaestopas: MAZOS, que planta.js pone en el suelo)
+  for (const [x0, n] of MAZOS) {
     const colores = ['marron', 'azulCl', 'tierra', 'gris', 'blanco', 'naranja', 'rojo', 'azulOsc'];
     for (let k = 0; k < n; k++) {
       const a = (k / n) * Math.PI * 2, rx = 0.005 * Math.cos(a), rz = 0.005 * Math.sin(a), gira = (y) => 0.6 * y;
       const p = (y, z) => new V3(x0 + rx * Math.cos(gira(y)) - rz * Math.sin(gira(y)), y, z + rx * Math.sin(gira(y)) + rz * Math.cos(gira(y)));
-      hilo([p(0.3, ZC), p(0.22, ZC + 0.01), p(0.1, ZC + 0.05), p(-0.02, 0.13), p(-0.1, 0.18), p(-0.13, 0.185)], colores[k % colores.length], 0.0013);
+      hilo([p(0.3, ZC), p(0.22, ZC + 0.01), p(0.1, ZC + 0.05), p(-0.02, 0.13), p(-0.065, 0.178), p(-0.09, 0.185)], colores[k % colores.length], 0.0013);
     }
     for (const [y, z] of [[0.24, ZC + 0.008], [0.12, ZC + 0.045], [0.0, 0.115]]) {
       const b = new THREE.Mesh(new THREE.TorusGeometry(0.0075, 0.0012, 4, 12), brida); b.position.set(x0, y, z); b.rotation.x = Math.PI / 2 - 0.3; g.add(b);

@@ -61,6 +61,7 @@ export default {
     const base = porTramos([
       { t0: 0.3, t1: 6.2, curva: c1, sale: 0.8 },                     // sale del lector ya lanzado
       { t0: 6.2, t1: 6.7, curva: new THREE.LineCurve3(X1, X1.clone().add(dentro)), junta: true },   // entra en el puerto sin pararse
+      { t0: 6.7, t1: 10.0, curva: new THREE.LineCurve3(X1.clone().add(dentro), X2.clone().add(dentro)), ease: smooth },   // dentro (no se ve), de un puerto al otro: si no, a los 10 s la ruta, y la cámara que la sigue, daban un salto
       { t0: 10.0, t1: 10.4, curva: new THREE.LineCurve3(X2.clone().add(dentro), X2), ease: smooth },
       { t0: 10.4, t1: DURA, curva: c2, ease: (x) => 0.55 * Math.pow(x, 1.4) },   // arranca; el plano 8 sigue la carrera
     ]);
@@ -96,7 +97,7 @@ export default {
         camara(t, cam);
 
         // el lector, aún encendido del plano 6, se apaga; sus LED parpadean al mandar
-        lector.aletas.forEach((a) => { a.material.emissiveIntensity = 1.2 * (1 - smooth(seg(t, 0, 1.6))); });
+        lector.aletas.forEach((a) => { a.material.emissiveIntensity = 0.35 * (1 - smooth(seg(t, 0, 1.6))); });   // (con lo que acaban en el 6)
         lector.leds.forEach((l, i) => { l.visible = t > 1.2 || Math.sin((t + 13.4) * 18 + i * 1.7) > -0.2; });   // con el mismo parpadeo que traían del plano 6
 
         // los sensores: cada 2,4 s su dato sube a su módulo, que lo acusa con un LED
@@ -125,13 +126,15 @@ export default {
         // la CPU: RUN fijo, COM parpadea mientras habla, ERR apagado; y la pantalla
         arm.ledsCPU[1].visible = t > 6.2 && t < 11 ? Math.sin(t * 20) > 0 : false;
         arm.ledsCPU[2].visible = false;
-        const j = (a, b) => (a + b * Math.sin(Math.floor(t * 3) * 1.7)).toFixed(a > 10 ? 1 : 2);
+        // las medidas de los sensores bailan un poco hasta que la CPU las empaqueta con él (9,5 s): desde ahí, las del
+        // paquete (REGISTRO), que son las que llegan al edge, al MES y a la pantalla; la del tag es una lectura, fija
+        const vivo = t < 9.5, j = (a, b) => (vivo ? a + b * Math.sin(Math.floor(t * 3) * 1.7) : a).toFixed(a > 10 ? 1 : 2);
         arm.escribir([
           ['PLC   RUN', '#2EBD6B'],
-          t > 6.7 ? [`RFID  T ${j(41.8, 0.1)} °C`, NARANJA] : ['RFID  ---', GRIS],
+          t > 6.7 ? ['RFID  T 41.8 °C', NARANJA] : ['RFID  ---', GRIS],
           [`PRES  ${j(2.41, 0.02)} bar`, BLANCO],
-          [`PROX  ${Math.sin(t * 1.3) > 0 ? 1 : 0}`, BLANCO],
-          [`IO-L  ${Math.round(63 + 2 * Math.sin(t))} %`, BLANCO],
+          [`PROX  ${!vivo || Math.sin(t * 1.3) >= 0 ? 1 : 0}`, BLANCO],
+          [`IO-L  ${vivo ? Math.round(63 + 2 * Math.sin(t)) : 63} %`, BLANCO],
         ]);
 
         electron.visible = t > 0.25 && !(t > 6.7 && t < 10.0);

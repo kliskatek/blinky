@@ -17,7 +17,7 @@
 
 import * as THREE from 'three';
 import { crearAntenaPanel, crearLectorFijo } from './lector.js';
-import { crearArmario } from './plc.js';
+import { crearArmario, MAZOS } from './plc.js';
 import { crearMonitor, crearPersona } from './sala.js';
 import { cajaRedonda } from './tag.js';
 import { crearEdge } from './edge.js';
@@ -97,8 +97,8 @@ export function crearPlanta() {
   const gen = new THREE.Mesh(new THREE.CylinderGeometry(G.r, G.r, G.largo, 40), conTexturas(mat(0x3d6f9e, 0.4, 0.9), pintura(), 4, 1)); gen.rotation.z = Math.PI / 2; gen.position.set(G.x, G.y, G.z); g.add(gen);
   caja(0.16, 0.08, 0.14, conTexturas(mat(0x3d6f9e, 0.4, 0.9), pintura()), G.x + 0.12, G.y + G.r + 0.03, G.z - 0.12);   // su caja de bornes
   const placaGen = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.1), pegatina('placa', ['KLK-G 7.5', '400 V  50 Hz', '7,5 kW', '1450 rpm', 'IP55  cl. F']));
-  placaGen.position.set(G.x - G.largo / 2 + 0.2, G.y, G.z + G.r + 0.004); g.add(placaGen);
-  for (let k = 0; k < 9; k++) { if (k === 4) continue;                                        // (la del medio, no: ahí va la placa del tag)
+  placaGen.position.set(G.x - G.largo / 2 + 0.191, G.y, G.z + G.r + 0.004); g.add(placaGen);
+  for (let k = 0; k < 9; k++) { if (k === 4 || k === 1 || k === 2) continue;                  // (la del medio, no: ahí va la placa del tag; ni las de la placa de características, que la cortaban)
     const a = new THREE.Mesh(new THREE.TorusGeometry(G.r + 0.005, 0.012, 6, 40), mat(0x335e86, 0.4, 0.45)); a.rotation.y = Math.PI / 2; a.position.set(G.x - G.largo / 2 + 0.08 + k * 0.074, G.y, G.z); g.add(a); }
   caja(G.largo * 0.8, G.y - G.r - 0.04, 0.4, aceroOsc, G.x, (G.y - G.r - 0.04) / 2 + 0.12, G.z);   // la bancada
   caja(0.07, MONTURA + 0.02, 0.16, mat(0x9aa0a6, 0.6, 0.35), G.x, G.y + G.r + (MONTURA - 0.02) / 2, G.z).receiveShadow = true;   // el taco del tag
@@ -156,6 +156,8 @@ export function crearPlanta() {
   const balizas = [baliza(-7.9, alto + 0.6), baliza(x1 - 0.25, alto), baliza(8.3, alto + 0.6)];
   const linea = cartel([{ txt: enIdioma('LÍNEA 3'), col: '#ffffff', y: 175, size: 170, x: 512, alinea: 'center' }], 2.2, 0.6, { fondo: 'rgba(28,90,160,.95)', borde: '#ffffff' });
   linea.malla.position.set(0, 4.6, cz); g.add(linea.malla);
+  linea.malla.material.side = THREE.FrontSide;                                                 // por las dos caras (desde la oficina se leía en espejo)
+  const dorso = linea.malla.clone(); dorso.rotation.y = Math.PI; g.add(dorso);
   for (const x of [-0.8, 0.8]) caja(0.02, 3.1, 0.02, mat(0x2a2f35, 0.5, 0.4), x, 4.6 + 0.3 + 1.55, cz);    // colgado de la viga
   // las cintas, entre la 1 y la 2 y entre la 2 y la 3, con sus piezas, que avanzan
   const cintas = [[-6.2, x0], [x1, 6.6]], yCinta = 0.85, piezas = [], cajaCarton = conTexturas(mat(0xffffff, 0, 0.85), carton());
@@ -226,7 +228,7 @@ export function crearPlanta() {
     for (let y = ay0 + 0.1; y < ay1 - 0.08; y += 0.012) caja(0.003, 0.003, 0.058, peine, x + (x < amx ? 0.0305 : -0.0305), y, az0 + 0.04);   // sus peines
   }
   caja(aw - 0.2, 0.06, 0.06, ranura, amx, A.y + 0.75, az0 + 0.04);                           // y la de arriba
-  for (let k = 0; k < 4; k++) caja(0.025, 0.02, 0.025, mat(0x15171a, 0.2, 0.6), ax0 + 0.3 + k * 0.12, ay0 - 0.005, amz);   // prensaestopas
+  for (const [x] of MAZOS) caja(0.03, 0.022, 0.03, mat(0x15171a, 0.2, 0.6), A.x + x, ay0 + e / 2 + 0.011, amz);   // los prensaestopas de los mazos, en el suelo
   const arm = crearArmario(); arm.grupo.position.copy(A); g.add(arm.grupo);
   const lector = crearLectorFijo(); lector.grupo.position.copy(LECTOR); lector.grupo.rotation.copy(DE_PIE); g.add(lector.grupo);
   const edge = crearEdge(); edge.grupo.position.copy(EDGE); edge.grupo.rotation.copy(DE_PIE); g.add(edge.grupo);   // el edge (piezas/edge.js)

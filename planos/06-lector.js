@@ -16,6 +16,7 @@ import { seg, smooth, smoother, bell, lerp, rng, porTramos, porClaves, texturaPu
 import { crearPlanta, ANTENA_POS } from '../piezas/planta.js';
 import { TRAS_VUELO } from './05-vuelta.js';
 import { CAM_INICIO7 } from './07-plc.js';
+import { PLC_REPOSO } from '../piezas/plc.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const S = 10;                                          // metros → mundo: la antena mide 2,6; el cable, de radio 0,05
@@ -89,7 +90,8 @@ export default {
 
     // lo que se enciende: la funda del cable por donde baja, el parche de la antena, el conector, los LED y las aletas
     const geoLuz = new THREE.TubeGeometry(cable, planta.coax.tramos, 0.065, 8);       // (con los tramos del cable: con menos, en las curvas cerradas atajaba y se salía de él)
-    grupo.add(new THREE.Mesh(geoLuz, new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, 0.4, 0.1), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false })));
+    const matLuz = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.4, 0.4, 0.1), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false });
+    grupo.add(new THREE.Mesh(geoLuz, matLuz));
     const conectorM = lector.conectores[0].material; conectorM.emissive = new THREE.Color(0xff5a1a);
 
     // frentes de backscatter que llegan con él: anillos detrás, por la misma ruta
@@ -168,7 +170,11 @@ export default {
 
         ant.brillo.material.opacity = 0.9 * bell(t, 5.2, 6.9) * (1 - 0.85 * cerca);   // en la pausa, bajo: si no, quema el primer plano
         geoLuz.setDrawRange(0, Math.floor(geoLuz.index.count * base.ease[2](seg(t, 6.7, 10.4)) / 6) * 6);
+        matLuz.opacity = 0.45 * (1 - smooth(seg(t, 11.0, 12.0)));                 // ya en el lector, el cable se apaga (el plano 7 no lo tiene)
         conectorM.emissiveIntensity = 3 * bell(t, 10.2, 11.8);
+        // el PLC, como lo encuentra el plano 7 al empezar
+        planta.armario.ledsCPU[1].visible = planta.armario.ledsCPU[2].visible = false;
+        planta.armario.escribir(PLC_REPOSO);
         // el lector lo recibe: los LED parpadean y las aletas se encienden una tras otra, y siguen encendidas al cortar
         // (el plano 7 empieza con ellas así y las apaga)
         const recibe = smooth(seg(t, 10.9, 11.4));

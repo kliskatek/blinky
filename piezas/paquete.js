@@ -30,14 +30,16 @@ export function crearPaquete() {
     new THREE.MeshStandardMaterial({ color: 0x041624, transparent: true, opacity: 0.72, roughness: 0.12, metalness: 0.2,
       emissive: 0x0b5d96, emissiveIntensity: 0.35, depthWrite: false }));
   cuerpo.add(vidrio);
-  // el borde que brilla (fresnel: los cantos y las caras de lado, no la de delante) y el registro, por dentro
+  // el borde que brilla (fresnel: los cantos y las caras de lado, no la de delante) y el registro, por dentro. (f, con
+  // max: la cara de delante mira justo a la cámara y daba un pelo menos de 0; pow de un negativo es NaN, y el bloom lo
+  // convertía en un cuadrado negro de un fotograma)
   const borde = new THREE.Mesh(cajaRedonda(1.04, 1.04, 1.04, 0.15, 0.06), new THREE.ShaderMaterial({
     uniforms: { color: { value: new THREE.Color(0.3, 1.1, 1.8) }, opacity: { value: 0.6 } },
     vertexShader: `varying vec3 vN; varying vec3 vV;
       void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0);
         vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `uniform vec3 color; uniform float opacity; varying vec3 vN; varying vec3 vV;
-      void main() { float f = 1.0 - abs(dot(normalize(vN), normalize(vV))); gl_FragColor = vec4(color * opacity * pow(f, 2.5), 1.0); }`,
+      void main() { float f = max(0.0, 1.0 - abs(dot(normalize(vN), normalize(vV)))); gl_FragColor = vec4(color * opacity * pow(f, 2.5), 1.0); }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   cuerpo.add(borde);
   const texto = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), new THREE.MeshBasicMaterial({ map: texturaRegistro(), transparent: true, toneMapped: false, depthWrite: false }));

@@ -169,7 +169,8 @@ export default {
     const filaMundo = tabla.malla.localToWorld(V(-0.5, 2.7 - (yFila(4) - 15) / 1024 * 9, 0.05));
 
     // el carril de luz, de la estación 4 a la base de datos, y otros paquetes que van a ella (del color del ERP)
-    const carril = new THREE.CatmullRomCurve3([V(0, Y, Z_EVT), V(0, 6.5, 18), V(1.5, 5.2, 2), V(3.5, 4.8, -10), V(5.6, 4.6, -16)]);
+    // (acaba de frente a su fila, la nueva: antes acababa más alto y, visto desde la alerta, apuntaba a la AV-0040)
+    const carril = new THREE.CatmullRomCurve3([V(0, Y, Z_EVT), V(0, 6.5, 18), V(1.5, 5.2, 2), V(3.5, 4.4, -10), filaMundo.clone().addScaledVector(normalTabla, 3)]);
     grupo.add(new THREE.Mesh(new THREE.TubeGeometry(carril, 200, 0.06, 8), aditivo(new THREE.Color(0.65, 0.3, 1.5), 0.55)));
     const entrada = new THREE.LineCurve3(V(0, Y, 74), V(0, Y, Z_AGR));
     grupo.add(new THREE.Mesh(new THREE.TubeGeometry(entrada, 40, 0.06, 8), aditivo(new THREE.Color(0.2, 0.8, 1.5), 0.55)));

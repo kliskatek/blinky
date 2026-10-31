@@ -44,6 +44,13 @@ const LINEAS = [
 // parecía que alguno rebotaba con la antena apagada), uno rebota y el siguiente se queda
 const H_MOD = 0.6, MOD0 = PARA + 0.4;
 const MODULA = (t) => t >= MOD0 && Math.floor((t - MOD0) / H_MOD) % 2 === 0;
+// lo mismo para el brillo, con los cambios en 0,08 s (de golpe, en un cuadro, parpadeaba) y encendida antes de MOD0 (si
+// no, entre la carga y el primer tramo se apagaba un momento, sin fotones)
+const MOD_SUAVE = (t) => {
+  if (t < MOD0) return 1;
+  const k = (t - MOD0) / H_MOD, u = k % 2, f = 0.08 / H_MOD;
+  return u < 1 ? (k < 1 ? 1 : smooth(Math.min(1, u / f))) : 1 - smooth(Math.min(1, (u - 1) / f));
+};
 const DIE_VUELTA = [[0.955, 0.768], [0.941, 0.768], [0.941, 0.822], [0.407, 0.822], [0.407, 0.633], [0.265, 0.633], [0.265, 0.56], [0.20, 0.50], [0.111, 0.477]];
 
 const linea = (pts) => { const c = new THREE.CurvePath(); for (let i = 1; i < pts.length; i++) c.add(new THREE.LineCurve3(pts[i - 1], pts[i])); return c; };
@@ -238,7 +245,8 @@ export default {
         const carga = smooth(seg(t, 13.9, 15.2)) * (1 - smooth(seg(t, 16, 17.5)));
         tag.matAnt.emissive.setHex(carga > 0.01 ? 0xff6a00 : 0x3A2A00);
         const enPausa = smooth(seg(tReal, PARA + 0.2, PARA + 0.6)) * (1 - smooth(seg(tReal, PARA + 6.2, PARA + 6.6)));
-        tag.matAnt.emissiveIntensity = (1 + 2.5 * carga) * (1 - 0.7 * enPausa * (MODULA(tReal) ? 0 : 1)) + 2.2 * enPausa * (MODULA(tReal) ? 1 : 0);   // la modulación, a la vista: encendida, brilla; apagada, casi sin brillo
+        const mod = MOD_SUAVE(tReal);
+        tag.matAnt.emissiveIntensity = (1 + 2.5 * carga) * (1 - 0.7 * enPausa * (1 - mod)) + 2.2 * enPausa * mod;   // la modulación, a la vista: encendida, brilla; apagada, casi sin brillo
         llegan.forEach(({ e, tl, rebota, r }) => {
           const d = tReal - tl;
           e.visible = d > -1.6 && (rebota ? d < 1.6 : d < 0.4);

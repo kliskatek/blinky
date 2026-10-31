@@ -218,8 +218,8 @@ export default {
         regulador.material.opacity = 0.3 * bell(t, 6.4, 8.8) * (0.8 + 0.2 * Math.sin(t * 9));
         memoria.material.opacity = 0.32 * bell(t, 11.2, 14.4);
         const dentro = smooth(seg(t, 8.0, 8.8)) * (1 - smooth(seg(t, 14.6, 15.6)));
-        digital.material.opacity = dentro * (0.16 + 0.05 * Math.sin(t * 7));
-        celdas.forEach((c) => { c.m.material.opacity = dentro * 0.6 * Math.max(0, Math.sin(t * c.f + c.fase)) ** 3; });
+        digital.material.opacity = dentro * (0.1 + 0.04 * Math.sin(t * 7));   // (más, con él dentro, quemaba la foto del die)
+        celdas.forEach((c) => { c.m.material.opacity = dentro * 0.4 * Math.max(0, Math.sin(t * c.f + c.fase)) ** 3; });
         hilos.i0.malla.material.emissiveIntensity = 2.2 * bell(t, 1.8, 3.0);
         hilos.d2.malla.material.emissiveIntensity = 2.2 * bell(t, 15.1, 16.3);
         cobre.emissiveIntensity = 1;
@@ -228,7 +228,7 @@ export default {
         electron.ruta = (s) => ruta(tr(s)); electron.rutaDesde = 0;
         electron.tam = tam(t); electron.calor = 0; electron.ojos = 1;
         // viene brillando; se carga en el rectificador; en la lógica digital, lo procesan: chispea
-        electron.brillo = Math.max(0.25 * (1 - smooth(seg(t, 0, 1))), 0.55 * carga, dentro * 0.18 * (0.5 + 0.5 * Math.sin(t * 19)));
+        electron.brillo = Math.max(0.25 * (1 - smooth(seg(t, 0, 1))), 0.55 * carga, dentro * 0.1 * (0.5 + 0.5 * Math.sin(t * 19)));
         patas.i0.pata.material.emissive.setHex(0x3d9bff);
         patas.i0.pata.material.emissiveIntensity = 3 * (1 - smooth(seg(t, 0.3, 1.4)));  // la pata, encendida como al final del plano 2
         electron.estela = 0.8;
@@ -237,6 +237,7 @@ export default {
         const my = t > 4.3 && t < 4.8 ? 0.6 : dentro > 0.5 ? 0.4 * Math.sin(t * 1.7) : 0;
         electron.mirada.set(lerp(electron.mirada.x, mx, 0.2), lerp(electron.mirada.y, my, 0.2));
         luzE.position.copy(ruta(t)).add(V(0, 0.08, 0));
+        luzE.intensity = 0.8 * Math.min(1, tam(t) / TAM0) ** 2;          // con él, encoge: pequeño y tan cerca del die, lo quemaba
 
         // la pata de MOSI del sensor se enciende al llegar; destello del corte al plano 4
         patasS[1].material.emissive.setHex(0x3d9bff); patasS[1].material.emissiveIntensity = 3 * smooth(seg(t, 18.3, 18.7));

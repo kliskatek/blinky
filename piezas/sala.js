@@ -140,10 +140,10 @@ export function crearPersona() {
     const o = new THREE.Mesh(new THREE.CircleGeometry(1, 28).scale(0.014, 0.021, 1), negro);
     const brillo = new THREE.Mesh(new THREE.CircleGeometry(0.0045, 12), blanco); brillo.position.set(0.004, 0.007, 0.0005); o.add(brillo);
     // por debajo del borde de la gorra, pegados a la esfera (cada uno girado como su normal)
-    o.position.set(s * 0.0377, 0.1347, -0.1046); o.rotation.set(-0.14, Math.PI + s * 0.34, 0); cabeza.add(o); return o;
+    o.position.set(s * 0.0372, 0.1349, -0.1031); o.rotation.set(-0.14, Math.PI + s * 0.34, 0); cabeza.add(o); return o;
   });
   const sonrisa = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.005, 8, 24, Math.PI), negro);
-  sonrisa.rotation.set(-0.42, Math.PI, Math.PI); sonrisa.position.set(0, 0.104, -0.102); cabeza.add(sonrisa);
+  sonrisa.rotation.set(-0.42, Math.PI, Math.PI); sonrisa.position.set(0, 0.1056, -0.0984);   // (a ras de la esfera: más fuera, de perfil asomaban) cabeza.add(sonrisa);
   const corona = new THREE.Mesh(new THREE.SphereGeometry(0.117, 40, 16, 0, Math.PI * 2, 0, Math.PI * 0.52), gorraM);
   corona.position.set(0, 0.17, 0.0); cabeza.add(corona);
   const boton = new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 8), gorraM); boton.position.set(0, 0.287, 0); cabeza.add(boton);

@@ -62,7 +62,7 @@ export function crearRocky() {
   const hilos = {};
   for (const [u, v, l, k] of PADS) {
     if (k === null) continue;
-    const a = padEn(u, v), b = patas[l + k].enDedo.clone();
+    const a = padEn(u, v), b = patas[l + k].enDedo.clone().setY(H / 2 + 0.035);   // (metido en el dedo: si no, de cerca se le veía la boca)
     const curva = new THREE.CatmullRomCurve3([a, new THREE.Vector3(a.x + (b.x - a.x) * 0.22, a.y + 0.3, a.z + (b.z - a.z) * 0.22), b]);
     const m = new THREE.Mesh(new THREE.TubeGeometry(curva, 32, 0.016, 6), matOro.clone());
     g.add(m);
