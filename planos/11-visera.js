@@ -11,7 +11,7 @@
 //   4.8-5.8 el logo empieza a mecerse; corte al plano 1
 
 import * as THREE from 'three';
-import { seg, smooth, smoother, lerp, pasa, dialogo } from '../utiles.js';
+import { seg, smooth, smoother, lerp, pasa, dialogo, bell } from '../utiles.js';
 import { montarSala, CAM_FINAL } from './10-pantalla.js';
 import { INICIO, flota, tLogo } from './01-logo.js';
 import { crearLogo } from '../piezas/logo.js';
@@ -107,8 +107,8 @@ export default {
 
         // la persona, como al final del plano 10: sonriendo y parpadeando
         persona.cabeza.rotation.set(-0.05, 0, 0);
-        persona.sonrisa.scale.set(1.2, 1.2, 1); persona.rubor.opacity = 0.32;
-        persona.ojos.forEach((o) => { o.scale.y = ((t + 11.2) % 3.7) < 0.12 ? 0.15 : 1; });   // el parpadeo sigue la cuenta del plano 10 (11,2 s)
+        persona.sonreir(1); persona.rubor.opacity = 0.32;
+        persona.parpadear(bell((t + 11.2) % 3.7, 0, 0.16));   // el parpadeo sigue la cuenta del plano 10 (11,2 s)
       },
     };
   },

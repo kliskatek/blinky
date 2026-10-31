@@ -96,9 +96,9 @@ export default {
         // la persona: asiente al ver el dato y sonríe
         persona.cabeza.rotation.x = 0.16 * bell(t, 5.6, 6.1) + 0.12 * bell(t, 6.1, 6.6) - 0.05 * smooth(seg(t, 7.2, 9.0));
         persona.cabeza.rotation.y = 0.12 * bell(t, 8.0, 10.6);
-        persona.sonrisa.scale.set(1 + 0.2 * smooth(seg(t, 6.4, 7.2)), 1 + 0.2 * smooth(seg(t, 6.4, 7.2)), 1);
+        persona.sonreir(smooth(seg(t, 6.4, 7.2)));
         persona.rubor.opacity = 0.15 + 0.17 * smooth(seg(t, 6.4, 7.2));   // (contento, se sonroja un poco)
-        persona.ojos.forEach((o) => { o.scale.y = (t % 3.7) < 0.12 ? 0.15 : 1; });
+        persona.parpadear(bell(t % 3.7, 0, 0.16));
 
         habla(dialogo(t, LINEAS), { pos: Tw, radio: 0.5 });            // Blinky, desde su tarjeta de la pantalla
         velo(0.6 * (1 - smooth(seg(t, 0, 0.3))), 0xcfe6ff);              // sale del destello; sin fundido al final: sigue el 10
