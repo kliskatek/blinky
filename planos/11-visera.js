@@ -107,7 +107,7 @@ export default {
 
         // la persona, como al final del plano 10: sonriendo y parpadeando
         persona.cabeza.rotation.set(-0.05, 0, 0);
-        persona.sonrisa.scale.set(1.35, 1.35, 1);
+        persona.sonrisa.scale.set(1.2, 1.2, 1); persona.rubor.opacity = 0.32;
         persona.ojos.forEach((o) => { o.scale.y = ((t + 11.2) % 3.7) < 0.12 ? 0.15 : 1; });   // el parpadeo sigue la cuenta del plano 10 (11,2 s)
       },
     };

@@ -110,7 +110,9 @@ export function crearMonitor() {
 }
 
 // ------------------------------------------------------------------ la persona
-// Sentada mirando a −z (al monitor). Origen en el suelo, bajo la silla.
+// Sentada mirando a −z (al monitor). Origen en el suelo, bajo la silla. Con el estilo de un icono (cabeza de bola, ojos y
+// sonrisa como los de Blinky), pero con lo que hace falta para que se lea como una persona: cuello, orejas, nariz, pelo
+// bajo la gorra, manos, piernas, el polo de Kliskatek con su logo a la espalda y una silla con ruedas.
 const cilindro = (a, b, r, m) => {
   const d = b.clone().sub(a), o = new THREE.Mesh(new THREE.CapsuleGeometry(r, Math.max(0.001, d.length() - 2 * r), 12, 28), m);
   o.position.copy(a).add(b).multiplyScalar(0.5); o.quaternion.setFromUnitVectors(new V3(0, 1, 0), d.normalize()); return o;
@@ -120,21 +122,46 @@ export function crearPersona() {
   const g = new THREE.Group();
   // dos colores y nada más: cuerpo azul de Kliskatek, cabeza clara; gorra marino
   const cuerpoM = mat(0x1f5fa8, 0.0, 0.55), cabezaM = mat(0xf1e6da, 0.0, 0.5), gorraM = mat(0x16263c, 0.0, 0.6);
+  const pantalonM = mat(0x2b3038, 0.0, 0.7), zapatoM = mat(0x15171a, 0.1, 0.45), cuelloM = mat(0x16263c, 0.0, 0.6), peloM = mat(0x3a2a20, 0.0, 0.75);
   // la silla, sencilla
   const silla = mat(0x23272d, 0.2, 0.6);
   const asiento = new THREE.Mesh(cajaBisel(0.46, 0.06, 0.44, 0.015), silla); asiento.position.set(0, 0.47, 0.02); g.add(asiento);
   const respaldo = new THREE.Mesh(cajaBisel(0.44, 0.5, 0.05, 0.015), silla); respaldo.position.set(0, 0.8, 0.24); respaldo.rotation.x = -0.12; g.add(respaldo);
   const columna = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.42, 32), mat(0x9aa0a6, 0.7, 0.3)); columna.position.set(0, 0.24, 0.02); g.add(columna);
+  // su base de cinco patas, con ruedas
+  const metal = mat(0x9aa0a6, 0.7, 0.3), rueda = mat(0x15171a, 0.1, 0.5);
+  for (let k = 0; k < 5; k++) {
+    const a = k * Math.PI * 2 / 5 + 0.3, fin = new V3(0.27 * Math.cos(a), 0.05, 0.02 + 0.27 * Math.sin(a));
+    g.add(cilindro(new V3(0, 0.07, 0.02), fin, 0.018, metal));
+    const r = new THREE.Mesh(new THREE.SphereGeometry(0.026, 24, 16), rueda); r.position.copy(fin).setY(0.026); g.add(r);
+  }
   // el cuerpo: una pieza de torno, de hombros redondos, como el muñeco de un icono; sin piernas
   const perfil = new THREE.SplineCurve([[0, 1.13], [0.1, 1.125], [0.175, 1.1], [0.208, 1.04], [0.212, 0.92], [0.198, 0.7], [0.19, 0.52], [0.0, 0.5]]
     .map(([x, y]) => new THREE.Vector2(x, y))).getPoints(40);
   perfil[0].x = 0; perfil[perfil.length - 1].x = 0;
   const cuerpo = new THREE.Mesh(new THREE.LatheGeometry(perfil, 96), cuerpoM); cuerpo.scale.z = 0.78; cuerpo.position.z = 0.02; g.add(cuerpo);
-  // los brazos, dos cápsulas hasta el teclado, sin manos
-  for (const s of [-1, 1]) g.add(cilindro(new V3(s * 0.19, 1.0, 0.0), new V3(s * 0.13, 0.8, -0.45), 0.052, cuerpoM));
+  // el cuello y el del polo, marino como la gorra (blanco, se confundía con la piel y parecía un pedestal); el logo de Kliskatek a la espalda (lo que se ve en los planos de detrás)
+  const cuello = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.044, 0.08, 40), cabezaM); cuello.position.set(0, 1.13, -0.02); g.add(cuello);
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.054, 0.075, 0.045, 64, 1, true), cuelloM); collar.material.side = THREE.DoubleSide;
+  collar.position.set(0, 1.124, -0.018); collar.rotation.x = -0.08; g.add(collar);
+  const vuelta = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 12, 64), cuelloM); vuelta.rotation.x = Math.PI / 2 - 0.08; vuelta.position.set(0, 1.104, -0.015); g.add(vuelta);
+  const espalda = crearLogo(0.12 / 17.3, { depth: 0.4, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.06, bevelSegments: 2, curveSegments: 1 });
+  espalda.position.set(0, 0.93, 0.192); espalda.rotation.x = 0.06; g.add(espalda);
+  // los brazos, dos cápsulas hasta el teclado, con sus manos encima
+  for (const s of [-1, 1]) {
+    g.add(cilindro(new V3(s * 0.19, 1.0, 0.0), new V3(s * 0.13, 0.8, -0.45), 0.052, cuerpoM));
+    const puno = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 12, 40), cuelloM); puno.position.set(s * 0.132, 0.803, -0.44); puno.lookAt(puno.position.clone().add(new V3(s * -0.06, -0.2, -0.45))); g.add(puno);   // (a lo largo del brazo)
+    const mano = new THREE.Mesh(new THREE.SphereGeometry(0.046, 40, 28), cabezaM); mano.scale.set(1, 0.62, 1.25); mano.position.set(s * 0.128, 0.785, -0.5); g.add(mano);
+  }
+  // las piernas, sentadas, y los zapatos
+  for (const s of [-1, 1]) {
+    g.add(cilindro(new V3(s * 0.1, 0.56, 0.02), new V3(s * 0.11, 0.54, -0.36), 0.068, pantalonM));
+    g.add(cilindro(new V3(s * 0.11, 0.54, -0.36), new V3(s * 0.11, 0.1, -0.4), 0.056, pantalonM));
+    const zapato = new THREE.Mesh(cajaBisel(0.1, 0.07, 0.22, 0.03), zapatoM); zapato.position.set(s * 0.11, 0.035, -0.45); g.add(zapato);
+  }
   // la cabeza, separada del cuerpo como en un icono (gira sobre su base, para asentir): ojos y sonrisa como los de
   // Blinky, y la gorra con su visera y el logo
-  const cabeza = new THREE.Group(); cabeza.position.set(0, 1.18, -0.04); g.add(cabeza);
+  const cabeza = new THREE.Group(); cabeza.position.set(0, 1.12, -0.04); g.add(cabeza);   // (más arriba, el cuello quedaba largo)
   const craneo = new THREE.Mesh(new THREE.SphereGeometry(0.11, 80, 56), cabezaM); craneo.position.set(0, 0.15, 0); cabeza.add(craneo);
   const negro = new THREE.MeshBasicMaterial({ color: 0x0a0d14 }), blanco = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const ojos = [-1, 1].map((s) => {
@@ -143,8 +170,24 @@ export function crearPersona() {
     // por debajo del borde de la gorra, pegados a la esfera (cada uno girado como su normal)
     o.position.set(s * 0.0372, 0.1349, -0.1031); o.rotation.set(-0.14, Math.PI + s * 0.34, 0); cabeza.add(o); return o;
   });
-  const sonrisa = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.005, 16, 48, Math.PI), negro);
-  sonrisa.rotation.set(-0.42, Math.PI, Math.PI); sonrisa.position.set(0, 0.1056, -0.0984);   // (a ras de la esfera: más fuera, de perfil asomaban) cabeza.add(sonrisa);
+  // la sonrisa: un arco de 130° (con media vuelta, al crecer, sus puntas llegaban a los ojos) dibujado sobre la esfera
+  // (un toro plano se hundía en ella por el medio y hacía un gancho en una punta). Crece desde su punto más bajo
+  const ARCO = 0.72 * Math.PI, RS = 0.02, Y0 = 0.094, enCara = (x, y) => new V3(x, y, -Math.sqrt(0.11 ** 2 - x * x - (y - 0.15) ** 2)).sub(new V3(0, 0.15, 0)).multiplyScalar(1.004).add(new V3(0, 0.15, 0));
+  const sonrisa = new THREE.Group(); sonrisa.position.copy(enCara(0, Y0)); cabeza.add(sonrisa);
+  const arco = Array.from({ length: 25 }, (_, i) => { const a = (i / 24 - 0.5) * ARCO; return enCara(RS * Math.sin(a), Y0 + RS - RS * Math.cos(a)).sub(sonrisa.position); });
+  sonrisa.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(arco), 48, 0.0045, 12), negro));
+  for (const p of [arco[0], arco[24]]) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.0045, 16, 12), negro); b.position.copy(p); sonrisa.add(b); }
+  // en la esfera de la cabeza (centro y = 0,15, radio 0,11), hacia la dirección d, a la distancia r del centro
+  const enCabeza = (o, d, r) => { const n = d.clone().normalize(); o.position.set(0, 0.15, 0).addScaledVector(n, r); o.lookAt(o.position.clone().add(n)); cabeza.add(o); return o; };
+  // las orejas, las mejillas (se sonrojan al sonreír: planos 10 y 11) y el pelo corto que asoma bajo la gorra (sin nariz,
+  // como Blinky: con ella parecía un payaso)
+  for (const s of [-1, 1]) {
+    const oreja = enCabeza(new THREE.Mesh(new THREE.SphereGeometry(0.026, 32, 24), cabezaM), new V3(s, -0.12, 0.05), 0.103); oreja.scale.set(1, 1.15, 0.45);
+  }
+  const rubor = new THREE.MeshBasicMaterial({ color: 0xff8a8a, transparent: true, opacity: 0.15, depthWrite: false });
+  const mejillas = [-1, 1].map((s) => enCabeza(new THREE.Mesh(new THREE.CircleGeometry(0.012, 40), rubor), new V3(s * 0.72, -0.4, -0.72), 0.1105));
+  const pelo = new THREE.Mesh(new THREE.SphereGeometry(0.1125, 80, 24, 0.12 * Math.PI, 0.76 * Math.PI, 0.46 * Math.PI, 0.2 * Math.PI), peloM);
+  pelo.position.set(0, 0.15, 0); cabeza.add(pelo);
   const corona = new THREE.Mesh(new THREE.SphereGeometry(0.117, 80, 32, 0, Math.PI * 2, 0, Math.PI * 0.52), gorraM);
   corona.position.set(0, 0.17, 0.0); cabeza.add(corona);
   const boton = new THREE.Mesh(new THREE.SphereGeometry(0.012, 24, 16), gorraM); boton.position.set(0, 0.287, 0); cabeza.add(boton);
@@ -153,5 +196,5 @@ export function crearPersona() {
   // el logo de la gorra: 7 cm de ancho, en la frente de la corona, mirando a −z
   const logo = crearLogo(0.07 / 17.3, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.08, bevelSegments: 2, curveSegments: 1 });
   logo.position.set(0, 0.235, -0.1); logo.rotation.set(0.42, Math.PI, 0); cabeza.add(logo);   // inclinado como la corona
-  return { grupo: g, cabeza, sonrisa, ojos, logo };
+  return { grupo: g, cabeza, sonrisa, ojos, logo, rubor, mejillas };
 }

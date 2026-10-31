@@ -96,7 +96,8 @@ export default {
         // la persona: asiente al ver el dato y sonríe
         persona.cabeza.rotation.x = 0.16 * bell(t, 5.6, 6.1) + 0.12 * bell(t, 6.1, 6.6) - 0.05 * smooth(seg(t, 7.2, 9.0));
         persona.cabeza.rotation.y = 0.12 * bell(t, 8.0, 10.6);
-        persona.sonrisa.scale.set(1 + 0.35 * smooth(seg(t, 6.4, 7.2)), 1 + 0.35 * smooth(seg(t, 6.4, 7.2)), 1);
+        persona.sonrisa.scale.set(1 + 0.2 * smooth(seg(t, 6.4, 7.2)), 1 + 0.2 * smooth(seg(t, 6.4, 7.2)), 1);
+        persona.rubor.opacity = 0.15 + 0.17 * smooth(seg(t, 6.4, 7.2));   // (contento, se sonroja un poco)
         persona.ojos.forEach((o) => { o.scale.y = (t % 3.7) < 0.12 ? 0.15 : 1; });
 
         habla(dialogo(t, LINEAS), { pos: Tw, radio: 0.5 });            // Blinky, desde su tarjeta de la pantalla
