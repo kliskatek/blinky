@@ -6,7 +6,10 @@
 // se apagan y caen, y solo pasa él (41,8 °C); 4 · EVENTOS, el aro se pone rojo y se convierte en una alerta, un
 // triángulo rojo (piezas/alerta.js); se para, lo dice y le gusta. Luego, como alerta, por el carril de luz entre otros
 // paquetes hasta la base de datos del ERP, y se encaja en su tabla de avisos de mantenimiento como
-// aviso nuevo, en rojo (al ERP no le llegan lecturas, sino lo que hay que hacer con ellas).
+// aviso nuevo, en rojo (al ERP no le llegan lecturas, sino lo que hay que hacer con ellas). Alrededor, el decorado de
+// piezas/digital.js: en la nave, las pantallas del MES (orden de fabricación, OEE, tendencia de temperatura con el umbral,
+// el lote, el estado de la línea y la planificación) y los flujos de datos; en el ERP, sus módulos unidos a la base de
+// datos (mantenimiento se enciende al llegar el aviso), las bandas de registros y la plataforma.
 //   0-0.4   sale del destello del corte (el plano 8 lo dejó subiendo, de paquete): por el carril hacia el MES
 //   0-2.6   entra en la nave hasta la estación 1; los otros datos llegan a la vez
 //   2.6-4.8 agrupar; 4.8-5.6 a la estación 2
@@ -25,6 +28,7 @@ import { cartel } from '../piezas/cartel.js';
 import { cajaRedonda } from '../piezas/tag.js';
 import { L, num } from '../idioma.js';
 import { matLinea, aristas, segmentos } from '../lineas.js';
+import { montarMES, montarERP } from '../piezas/digital.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const PARA = 11.6, PAUSA = 3.4;
@@ -75,6 +79,8 @@ export default {
     // ------------------------------------------------------------ el MES: la nave, el rótulo y las estaciones
     const nave = aristas(new THREE.BoxGeometry(12, 7, 34), matLinea({ color: 0x3dc8ff, opacity: 0.45, toneMapped: false }));
     nave.position.set(0, 6.5, 45); grupo.add(nave);
+    const VALORES = [...OTROS, SUYO], MEDIA_LOTE = VALORES.reduce((a, b) => a + b) / VALORES.length;
+    const mes = montarMES(grupo, { SUYO, UMBRAL: MEDIA_LOTE + MARGEN, MEDIA: MEDIA_LOTE, LECTURAS: VALORES.length });
     const rotuloMES = cartel([
       { txt: 'MES', col: '#9fe8ff', y: 250, size: 260, x: 512, alinea: 'center' },
       { txt: L('gestión de la producción'), col: '#7fb8d8', y: 340, size: 62, x: 512, alinea: 'center' },
@@ -125,8 +131,8 @@ export default {
     const rayos = segmentos(8, matLinea({ color: 0x3dc8ff, opacity: 0, blending: THREE.AdditiveBlending, toneMapped: false }));
     grupo.add(rayos.malla);
     const chispas = Array.from({ length: 8 }, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.07, 24, 16), aditivo(new THREE.Color(0.8, 1.6, 2.2), 1)); grupo.add(m); return m; });
-    const VALORES = [...OTROS, SUYO], llegaValor = (k) => 5.7 + 0.2 * k + 0.35;
-    const media = crearDato(`x̄ ${coma(VALORES.reduce((a, b) => a + b) / VALORES.length)}`, new THREE.Color(0.9, 1.3, 1.7)); grupo.add(media.grupo);
+    const llegaValor = (k) => 5.7 + 0.2 * k + 0.35;
+    const media = crearDato(`x̄ ${coma(MEDIA_LOTE)}`, new THREE.Color(0.9, 1.3, 1.7)); grupo.add(media.grupo);
 
     // Blinky: de paquete y, desde la estación 4, de alerta
     const paquete = crearPaquete(); grupo.add(paquete.grupo);
@@ -147,6 +153,7 @@ export default {
     }
     const rotuloDB = cartel([{ txt: 'ERP', col: '#dcb8ff', y: 330, size: 300 }], 3.2, 1.3, { fondo: 'rgba(0,0,0,0)', borde: 'rgba(0,0,0,0)' });
     rotuloDB.malla.position.copy(DB).add(V(0, 7.0, 0)); grupo.add(rotuloDB.malla);
+    const erp = montarERP(grupo, DB, MORADO);
 
     // la tabla: avisos de mantenimiento (al ERP no le llegan lecturas, sino lo que hay que hacer con ellas); los cuatro de
     // antes y el quinto, vacío, es el suyo: la alerta se encaja como aviso nuevo, en rojo
@@ -168,19 +175,17 @@ export default {
     const normalTabla = V(0, 0, 1).applyQuaternion(tabla.malla.quaternion);
     const filaMundo = tabla.malla.localToWorld(V(-0.5, 2.7 - (yFila(4) - 15) / 1024 * 9, 0.05));
 
-    // el carril de luz, de la estación 4 a la base de datos, y otros paquetes que van a ella (del color del ERP)
+    // el carril de luz, de la estación 4 a la base de datos, y otros paquetes que le llegan de sus módulos
     // (acaba de frente a su fila, la nueva: antes acababa más alto y, visto desde la alerta, apuntaba a la AV-0040)
     const carril = new THREE.CatmullRomCurve3([V(0, Y, Z_EVT), V(0, 6.5, 18), V(1.5, 5.2, 2), V(3.5, 4.4, -10), filaMundo.clone().addScaledVector(normalTabla, 3)]);
     grupo.add(new THREE.Mesh(new THREE.TubeGeometry(carril, 400, 0.06, 16), aditivo(new THREE.Color(0.65, 0.3, 1.5), 0.55)));
     const entrada = new THREE.LineCurve3(V(0, Y, 74), V(0, Y, Z_AGR));
     grupo.add(new THREE.Mesh(new THREE.TubeGeometry(entrada, 80, 0.06, 16), aditivo(new THREE.Color(0.2, 0.8, 1.5), 0.55)));
     const viajeros = [];
-    for (let i = 0; i < 9; i++) {
-      const a = (i / 9) * Math.PI * 2, ini = V(Math.cos(a) * 40, 3 + (i % 3) * 3, -24 + Math.sin(a) * 40);
-      const c = new THREE.CatmullRomCurve3([ini, ini.clone().lerp(DB, 0.5).setY(6 + (i % 2) * 2), DB.clone().setY(4)]);
-      grupo.add(new THREE.Mesh(new THREE.TubeGeometry(c, 160, 0.03, 12), aditivo(0x6a2fb0, 0.5)));
-      const m = new THREE.Mesh(cajaRedonda(0.5, 0.5, 0.5, 0.08, 0.03), new THREE.MeshBasicMaterial({ color: MORADO, toneMapped: false, transparent: true, opacity: 0.8 }));
-      grupo.add(m); viajeros.push({ m, c, f: i * 0.37 });
+    for (let i = 0; i < 12; i++) {
+      const c = erp.curvas[i % erp.curvas.length];
+      const m = new THREE.Mesh(cajaRedonda(0.4, 0.4, 0.4, 0.07, 0.025), new THREE.MeshBasicMaterial({ color: MORADO, toneMapped: false, transparent: true, opacity: 0.8 }));
+      grupo.add(m); viajeros.push({ m, c, f: (i * 0.37) % 1 });
     }
     const aERP = porTramos([
       { t0: SALE, t1: SALE + 4.6, curva: carril, ease: (x) => x },
@@ -277,7 +282,9 @@ export default {
         const quien = tReal < 10.8 ? paquete.grupo : alerta.grupo;            // de paquete, y luego de alerta
         habla(dialogo(tReal, LINEAS), { pos: quien.position, radio: 0.65 * quien.scale.x });
 
+        mes.actualizar(t);
         // el ERP
+        erp.actualizar(t, smooth(seg(t, SALE + 5.4, SALE + 6.0)));
         viajeros.forEach(({ m, c, f }) => { const k = ((t * 0.18 + f) % 1); m.position.copy(c.getPointAt(k)); });
         aros.forEach((a, i) => { a.material.color.copy(MORADO).multiplyScalar(0.7 + 0.6 * bell(t, SALE + 5.6 + i * 0.05, SALE + 6.8)); });
         tabla.pintar(lineas(t > SALE + 6.0 ? 1 : 0));
