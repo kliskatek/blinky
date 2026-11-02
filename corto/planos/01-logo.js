@@ -1,14 +1,14 @@
-// Plano 1: el logo flotante de la portada (la "k«" extruida, la misma de k3d-cases.js, escena cover), un brillo que
-// recorre sus cantos y se queda en la esquina de arriba de la k, la cámara entra en el brillo hasta que lo llena todo,
-// y del destello nace Blinky, de fotón: abre los ojos, mira alrededor, se presenta y sale corriendo.
-//   0-4.2   el logo flota y una luz barre sus cantos; se va quedando quieto
-//   4.0-4.8 el brillo prende en la esquina
-//   4.8-7.9 la cámara entra en el brillo; destello en blanco
-//   7.9-8.6 el destello se recoge en Blinky (con los ojos cerrados)
-//   9.3     abre los ojos; mira a un lado, al otro, a cámara
-//   10.6-20.8 se presenta (HABLA segundos: el resto del plano va retrasado eso)
-//   20.9    salta de contento; 21.7 coge carrerilla y sale disparado hacia la derecha
-// (el arranque, 0-4.8, va acortado a ABRE segundos: R() lo comprime)
+// Plano 1: el logo flotante de la portada (la "k«" extruida, la misma de k3d-cases.js, escena cover), con un brillo en la
+// esquina de arriba de la k; la cámara entra en el brillo hasta que lo llena todo, y del destello nace Blinky, de fotón:
+// abre los ojos, se presenta y sale corriendo. Todo eso, en un segundo: en una publicación, si en los tres primeros
+// segundos no pasa nada, la gente sigue de largo. Los tiempos de este fichero (t) son los de cuando el arranque era
+// lento; R() pasa del segundo real al de aquí, y se salta lo que ya no se ve (el logo meciéndose y una luz barriendo sus
+// cantos, 0-4.3, y Blinky mirando alrededor, 9.5-10.6):
+//   real 0-1.3   (4.3-7.9)  el logo, ya quieto y con el brillo prendiendo, se acerca desde lejos (la cámara va hacia él
+//                           sin pararse) y la cámara sigue hasta meterse en el brillo; destello en blanco
+//   real 1.3-1.7 (7.9-9.5)  el destello se recoge en Blinky, que abre los ojos
+//   real 1.8     (10.6)     se presenta (HABLA segundos: el resto del plano va retrasado eso)
+//   después: salta de contento, coge carrerilla y sale disparado hacia la derecha
 
 import * as THREE from 'three';
 import { seg, smooth, smoother, easeOut, easeIn, easeBack, bell, lerp, rng, dialogo } from '../utiles.js';
@@ -19,15 +19,22 @@ const S = 0.27;
 // la presentación: empieza en PRESENTA y dura HABLA; lo de después de PRESENTA va retrasado HABLA segundos
 const PRESENTA = 10.6, HABLA = 10.2;
 const tr = (t) => (t < PRESENTA ? t : t < PRESENTA + HABLA ? PRESENTA : t - HABLA);
-// el arranque (el logo flota y la luz barre sus cantos) va más deprisa: los ABRE primeros segundos reales hacen los 4.8
-// de este fichero; los tiempos de aquí son sin acortar
-const ABRE = 3.9, R = (t) => (t < ABRE ? t * 4.8 / ABRE : t + 4.8 - ABRE);
-export { R as tLogo };
+// del segundo real al de este fichero: por tramos rectos (TRAMOS: [real, fichero]); después del último, a la par
+const TRAMOS = [[0, 4.3], [1.3, 7.9], [1.7, 9.5], [1.8, 10.6]], [FIN_R, FIN_T] = TRAMOS[TRAMOS.length - 1];
+const R = (x) => {
+  if (x >= FIN_R) return x - FIN_R + FIN_T;
+  const i = TRAMOS.findIndex(([a], k) => x < TRAMOS[k + 1][0]), [a0, b0] = TRAMOS[Math.max(0, i)], [a1, b1] = TRAMOS[Math.max(0, i) + 1];
+  return b0 + (b1 - b0) * Math.max(0, x - a0) / (a1 - a0);
+};
+const realDe = (t) => {                              // y al revés
+  if (t >= FIN_T) return t - FIN_T + FIN_R;
+  const i = TRAMOS.findIndex(([, b], k) => t < TRAMOS[k + 1][1]), [a0, b0] = TRAMOS[Math.max(0, i)], [a1, b1] = TRAMOS[Math.max(0, i) + 1];
+  return a0 + (a1 - a0) * Math.max(0, t - b0) / (b1 - b0);
+};
 // pose de reposo del logo, en la que prende el brillo: un poco girado, para que se lea el volumen
 const REPOSO = { ry: -0.28, rx: 0.1 };
-// cómo flota el logo (t, del tiempo de este fichero) y se va quedando en reposo antes del brillo. El plano 11 lo usa
-// con t negativo, para que el logo llegue al corte ya meciéndose como empieza aquí
-export function flota(logo, t) {
+// cómo flota el logo (t, del tiempo de este fichero) y se va quedando en reposo antes del brillo
+function flota(logo, t) {
   const vaiven = 1 - smooth(seg(t, 2.4, 4.2));
   logo.rotation.y = REPOSO.ry + vaiven * 0.55 * Math.sin(t * 0.55 + 0.6);
   logo.rotation.x = REPOSO.rx + vaiven * 0.08 * Math.sin(t * 0.7);
@@ -40,11 +47,7 @@ const LINEAS = [
   [18.2, 20.8, '¡Y os voy a explicar cómo funciona la tecnología Kliskatek!'],
 ];
 
-// estrella de cuatro puntas con un núcleo redondo: el brillo
-// El primer fotograma: el logo a esta escala y con este giro, la cámara a esta distancia, de frente y con este fov. El
-// plano 11 acaba exactamente así sobre el logo de la gorra, para que la vuelta al principio no se note.
-export const INICIO = { escala: S, distancia: 13.5, fov: 30, rot: [0.1, -0.28 + 0.55 * Math.sin(0.6), 0] };
-
+// estrella de cuatro puntas con un núcleo redondo: el brillo (también el de la k de la gorra, en el plano 11)
 export function texturaEstrella() {
   const c = document.createElement('canvas'); c.width = c.height = 512;
   const g = c.getContext('2d'); g.translate(256, 256);
@@ -73,9 +76,9 @@ function texturaPunto() {
 
 export default {
   nombre: 'Intro',
-  dura: 13 + HABLA - (4.8 - ABRE),
+  dura: 13 + HABLA - (FIN_T - FIN_R),
   sombra: false,                                   // (el logo, solo: sin sombras)
-  quieto: [[PRESENTA - (4.8 - ABRE), PRESENTA - (4.8 - ABRE) + HABLA]],          // (para el modo sonido: ver sonido.js)
+  quieto: [[realDe(PRESENTA), realDe(PRESENTA) + HABLA]],          // (para el modo sonido: ver sonido.js)
   montar({ escena, cam, bloom, electron, grupo, velo, habla }) {
     // luces del logo (como la portada) y una luz que barre los cantos
     grupo.add(new THREE.HemisphereLight(0xcfe0ff, 0x0a0c10, 0.5));
@@ -106,7 +109,7 @@ export default {
       opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
     grupo.add(new THREE.Points(gPolvo, matPolvo));
 
-    const C0 = new THREE.Vector3(0, 0, 13.5), O = new THREE.Vector3(), mira = new THREE.Vector3();
+    const C0 = new THREE.Vector3(0, 0.4, 26), O = new THREE.Vector3(), mira = new THREE.Vector3();   // (de lejos: el logo, a un tercio del ancho)
     const FONDO0 = new THREE.Color(0x0b0d10), FONDO1 = new THREE.Color(FONDO_TAG);   // acaba en el fondo del plano 2
     const C1 = G.clone().add(new THREE.Vector3(0, 0, 2.4));     // la cámara después del destello, frente al electrón
 
@@ -145,11 +148,12 @@ export default {
         brillo.visible = t > 3.95 && t < 8.7;
 
         // la cámara: frente al logo; entra en el brillo (con un poco de arco) hasta tocarlo; tras el destello, frente al electrón
-        const entra = smoother(seg(t, 4.8, 7.9));
+        // (ya en marcha desde el primer cuadro, y cada vez más deprisa: el logo se acerca y la cámara sigue hasta la esquina)
+        const entra = seg(t, 4.3, 7.9);
         if (t < 7.9) {
-          cam.position.lerpVectors(C0, G.clone().add(new THREE.Vector3(0.0, 0.0, 0.12)), easeIn(entra) * 0.35 + smoother(entra) * 0.65);
-          cam.position.y += 0.6 * Math.sin(Math.PI * entra) * (1 - entra);
-          mira.lerpVectors(O, G, smooth(seg(t, 4.6, 6.2)));
+          cam.position.lerpVectors(C0, G.clone().add(new THREE.Vector3(0.0, 0.0, 0.12)), 0.3 * entra + 0.7 * entra * entra * entra);
+          cam.position.y += 0.3 * Math.sin(Math.PI * entra) * (1 - entra);
+          mira.lerpVectors(O, G, smooth(seg(t, 5.6, 7.3)));
           cam.fov = lerp(30, 22, entra);
         } else {
           // tras el destello: frente al electrón; cuando sale corriendo, la cámara se le pone detrás con el encuadre con
@@ -172,23 +176,21 @@ export default {
 
         // el destello: blanco que llena la pantalla y se abre sobre el electrón
         const destello = smooth(seg(t, 7.2, 7.9)) * (1 - smooth(seg(t, 7.9, 8.5)));
-        // empieza en negro (en el que acaba el plano 11) y se abre al logo; luego, el destello
-        const negro = 1 - smooth(seg(tReal, 0, 1.0));
-        if (negro > 0) velo(negro, 0x000000, { fundido: true }); else velo(destello, 0xeaf4ff);
+        velo(destello, 0xeaf4ff);                                       // (sin fundido de negro: el primer cuadro ya es el logo)
         bloom.strength = 0.55 + 1.4 * smooth(seg(t, 5.5, 7.9)) * (1 - smooth(seg(t, 7.9, 8.8)));
 
         // el electrón
         electron.visible = t > 7.85;
-        electron.ruta = (s) => ruta(R(s)); electron.rutaDesde = 7.85 - (4.8 - ABRE);
+        electron.ruta = (s) => ruta(R(s)); electron.rutaDesde = realDe(7.85);
         electron.tam = easeBack(seg(t, 7.9, 8.7));
         electron.brillo = 1 - smooth(seg(t, 7.9, 8.8));
         electron.calor = 0;
         electron.ojos = smooth(seg(t, 9.3, 9.55));
         electron.estela = smooth(seg(tr(t), 11.3, 11.9));
         electron.forma = 1;                                                  // nace de la luz: es un fotón
-        // mira a un lado y a otro; al hablar, a cámara
+        // a cámara mientras se presenta; al coger carrerilla, adonde va
         const u = tr(t), lejos = false;   // (se lo dice a cámara)
-        const mx = t < 9.7 ? 0 : t < 10.15 ? -1 : t < 10.6 ? 1 : lejos ? 0.9 : u < 11.4 ? 0 : 1;
+        const mx = t < 10.6 ? 0 : lejos ? 0.9 : u < 11.4 ? 0 : 1;
         electron.mirada.set(lerp(electron.mirada.x, mx, 0.25), lerp(electron.mirada.y, (u > 10.7 && u < 11.3) || lejos ? 0.4 : 0, 0.25));
         habla(dialogo(t, LINEAS));
       },

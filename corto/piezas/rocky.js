@@ -72,18 +72,3 @@ export function crearRocky() {
 
   return { grupo: g, cara, padEn, hilos, patas, yCara };
 }
-
-// Una pista de cobre de la placa: [[x, z], ...] en el plano y, con el ancho dado. Cada tramo mide justo lo que hay entre
-// sus dos puntos y en cada punto va un disco (unión y extremos redondos, como en un PCB): alargar los tramos para que
-// se tocaran dejaba esquinas sueltas en los quiebros.
-export function crearPista(pts, y, ancho, material, grueso = 0.012) {
-  const g = new THREE.Group();
-  for (let i = 1; i < pts.length; i++) {
-    const [x0, z0] = pts[i - 1], [x1, z1] = pts[i];
-    const m = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x1 - x0, z1 - z0), grueso, ancho), material);
-    m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); m.rotation.y = -Math.atan2(z1 - z0, x1 - x0); g.add(m);
-  }
-  const disco = new THREE.CylinderGeometry(ancho / 2, ancho / 2, grueso, 48);
-  pts.forEach(([x, z]) => { const d = new THREE.Mesh(disco, material); d.position.set(x, y, z); g.add(d); });
-  return g;
-}

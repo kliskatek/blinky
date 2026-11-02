@@ -28,7 +28,7 @@ import { crearMCU, MCU, VUELTA_M, ZONAS_M } from '../piezas/mcu.js';
 import { Electron } from '../electron.js';
 import { montarTag, enPlanta, dirEnPlanta, TAM_FINAL, PLANO_FINAL, ESCALA_CHIP, PLANTA } from './02-tag.js';
 import { ANTENA_POS } from '../piezas/planta.js';
-import { PLANO_VUELTA, del4, POS_MCU, SDA_SENSOR } from './03-rocky.js';
+import { PLANO_VUELTA, del4, POS_MCU, SDA_SENSOR, TAM_PLACA } from './03-rocky.js';
 import { montarPlaca, pistaCerca, KICAD, MM, SOBRE } from '../piezas/senseread.js';
 import { crearRastro } from '../../corto2/piezas/campos.js';
 
@@ -123,8 +123,11 @@ export default {
       { t0: 15.0, t1: 15.9, curva: hiloRF, junta: true },
       { t0: 15.9, t1: 16.8, curva: sale, junta: true },
     ]);
-    const tamA = (t) => lerp(0.3, TAM0, smoother(seg(t, 16.8, 18.3)));
-    const rutaA = (t) => { const de = 0.12 * (tamA(t) - 0.3); return baseA(t).add(V(-de, de, 0)); };   // como en el plano 3
+    // como en el plano 3: por las pistas de la placa (SDA y MISO), de TAM_PLACA; al salir del ROCKY100, crece hasta TAM0
+    const tamDie = (t) => lerp(0.3, TAM0, smoother(seg(t, 16.8, 18.3)));
+    const enPlaca = (t) => smoother(seg(t, 0.4, 0.9)) * (1 - smoother(seg(t, 2.8, 3.3))) + smoother(seg(t, 8.0, 8.5)) * (1 - smoother(seg(t, 9.4, 9.85)));
+    const tamA = (t) => tamDie(t) + (TAM_PLACA - 0.3) * enPlaca(t);
+    const rutaA = (t) => baseA(t).add(V(-0.12 * (tamDie(t) - 0.3), 0.12 * (tamA(t) - 0.3), 0));
     // la pista del die (del ROCKY100 y del micro), encendida en rojo por donde pasa; y la de la placa (crearRastro)
     const matRojo = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 0.45, 0.12), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
     const geoLuz = new THREE.TubeGeometry(linea(DIE_VUELTA.map(([u, v]) => padEn(u, v).setY(yCara + 0.006))), 400, 0.011, 10);

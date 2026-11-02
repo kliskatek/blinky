@@ -8,8 +8,8 @@
 // verDentro(k) hace transparente la carcasa de la máquina (0 opaca, 1 se ve dentro); girar(t) mueve el rotor.
 //
 // crearPlanta() devuelve el grupo y los sitios, en metros de la planta:
-//   TAG       { pos, rotY, escala }: dónde va el tag (crearTag, con esta rotación y escala); tagSimple es su sustituto de
-//             lejos (los planos que montan el tag de verdad lo esconden)
+//   TAG       { pos, rotY, escala }: dónde va el tag (con esta rotación y escala; el de verdad, ponerTag de
+//             piezas/senseread.js); tagSimple es su sustituto de lejos (los planos que montan el de verdad lo esconden)
 //   ANTENA    { pos, cara, normal }: la antena (el centro, el centro de la cara y hacia dónde mira)
 //   ARMARIO   el origen de crearArmario (planos 7 y 8); LECTOR y EDGE, los del lector y el edge en el carril (de pie)
 //   OFICINA   el origen de la sala (montarSala, plano 10: x, z en metros de la sala; el suelo de la oficina en y)

@@ -1,115 +1,105 @@
-// Plano 11: la visera. Sigue del plano 10 (la misma sala, montarSala, y el mismo encuadre de cámara): la persona sonríe y
-// la cámara se acerca a la gorra hasta quedar, respecto a su logo, exactamente como queda la del plano 1 respecto al logo
-// de la portada en su primer fotograma (la misma distancia en proporción, el mismo giro y el mismo fov; INICIO de
-// 01-logo.js). Mientras se acerca, la sala se apaga y entran las luces del plano 1, puestas igual respecto al logo; luego
-// la sala, la persona y la gorra desaparecen y queda solo el logo, ya el de la portada (con su grosor), sobre el fondo del
-// plano 1, y empieza a mecerse como empieza allí; mientras, todo se funde a negro, como empieza el corto.
-//   0-0.8   la persona sonríe (el final del plano 10)
-//   0-5.2   la cámara se acerca a la gorra (sin parar: viene en marcha del plano 10); la sala se apaga y entran las
-//           luces del plano 1
-//   3.4-5.0 desaparece todo menos el logo, que gana el grosor del de la portada
-//   4.8-5.8 el logo empieza a mecerse y todo se funde a negro; corte al plano 1 (que empieza en negro)
+// Plano 11: la visera. Sigue del plano 10 (la misma sala, montarSala, y el mismo encuadre de cámara), con la cámara
+// llegando a la gorra de la persona. Blinky sale de la pantalla (detrás de la persona), pasa por encima de su cabeza y
+// se queda junto a la k del logo de la gorra mientras dice la última frase; la esquina de la k prende con el mismo brillo
+// del que nació en el plano 1, Blinky se mete en él, la cámara entra detrás y todo acaba en un destello que se funde a
+// negro. Ese es el final: no hace falta volver al logo del principio.
+//   0-ACERCA  la cámara sigue acercándose a la gorra (viene en marcha del plano 10) y se para delante del logo
+//   0.2-0.5   Blinky sale de la tarjeta de la pantalla, de fotón
+//   0.3-1.9   vuela por encima de la cabeza hasta la k; 1.9-2.5 se queda a su lado (habla)
+//   2.3-2.6   prende el brillo en la esquina de la k; 2.5-2.9 Blinky se mete en él
+//   2.7-3.5   la cámara entra en el brillo; destello en blanco, que se funde a negro hasta el final
 
 import * as THREE from 'three';
-import { seg, smooth, smoother, lerp, pasa, dialogo, bell } from '../utiles.js';
+import { seg, smooth, smoother, easeIn, easeOut, easeBack, lerp, pasa, dialogo, bell } from '../utiles.js';
 import { montarSala, CAM_FINAL } from './10-pantalla.js';
-import { INICIO, flota, tLogo } from './01-logo.js';
-import { crearLogo } from '../piezas/logo.js';
+import { texturaEstrella } from './01-logo.js';
+import { LOGO_C, ESQUINA } from '../piezas/logo.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
-const DURA = 5.8;
-// el cierre (y se va antes del final: el primer fotograma del plano 1 no tiene bocadillo)
-const LINEAS = [[0.8, 5.2, 'Así funciona la tecnología Kliskatek.']];
+const DURA = 4.4;
+const LLEGA = 1.9, METE = 2.5;                                    // cuándo llega a la k y cuándo se mete en ella
+const LINEAS = [[0.6, METE, 'Así funciona la tecnología Kliskatek.']];
+const TAM = 0.55;                                                  // Blinky, del tamaño de la k de la gorra
 
 export default {
   nombre: 'Fin',
   dura: DURA,
-  quieto: [[0, DURA]],
+  quieto: [[LLEGA - 0.3, METE]],                                   // (si la voz no cabe, se alarga mientras espera junto a la k)
   montar({ escena, cam, electron, grupo, bloom, habla, velo }) {
-    const { set, persona, H, luces, monitor } = montarSala(grupo);
+    const { set, persona, H, Tw, luces, monitor } = montarSala(grupo);
     monitor.dibujar({ nuevo: 0.05 + 0.95 * 0.5 });                     // la pantalla, como la deja el plano 10 al acabar
     const base = luces.map((l) => l.intensity);
-    persona.cabeza.rotation.set(-0.05, 0, 0);                          // la cabeza, como acaba el plano 10, antes de medir
+    persona.cabeza.rotation.set(-0.05, 0, 0);                          // la cabeza, como acaba el plano 10
     grupo.updateMatrixWorld(true);
     const logo = persona.logo, LOGO = logo.getWorldPosition(V());
 
-    // de dónde sale la cámara (el final del plano 10) y adónde llega (el primer fotograma del plano 1, sobre esta gorra)
-    const posA = H.clone().add(CAM_FINAL.de);
-    const tmp = new THREE.PerspectiveCamera(); tmp.position.copy(posA); tmp.lookAt(LOGO);
-    const R1 = new THREE.Quaternion().setFromEuler(new THREE.Euler(...INICIO.rot)), R1inv = R1.clone().invert();
-    const posF = logo.localToWorld(V(0, 0, INICIO.distancia / INICIO.escala).applyQuaternion(R1inv));
-    const qF = logo.getWorldQuaternion(new THREE.Quaternion()).multiply(R1inv);
-    const k = logo.getWorldScale(V()).x / INICIO.escala;               // cuánto más pequeño es este logo que el de la portada
+    // la esquina de arriba de la k, en la cara del logo (G), y hacia dónde mira el logo (N)
+    const cara = logo.children[0].geometry; cara.computeBoundingBox();
+    const zCara = cara.boundingBox.max.z;
+    const G = logo.localToWorld(V(ESQUINA[0] - LOGO_C[0], LOGO_C[1] - ESQUINA[1], zCara));
+    const N = logo.localToWorld(V(0, 0, zCara + 1)).sub(logo.localToWorld(V(0, 0, zCara))).normalize();
+    const arriba = V(0, 1, 0), lado = N.clone().cross(arriba).normalize();
 
-    // el mundo del plano 1, en su sitio respecto al logo (girado como la cámara final y escalado por k): sus luces y su logo
-    const marco = new THREE.Group(); marco.position.copy(LOGO); marco.quaternion.copy(qF); marco.scale.setScalar(k); grupo.add(marco);
-    const dir = (color, i, p) => { const l = new THREE.DirectionalLight(color, 0); l.position.set(...p); marco.add(l); marco.add(l.target); l.userData.i = i; return l; };
-    const llave = dir(0xffffff, 2.2, [-5, 6, 9]), contra = dir(0x3d9bff, 3.2, [5, 1, -7]);
-    const relleno = new THREE.PointLight(0x2a8cff, 0, 25 * k, 2); relleno.position.set(-5, -1, 4); relleno.userData.i = 30 * k * k; marco.add(relleno);
-    const cielo = new THREE.HemisphereLight(0xcfe0ff, 0x0a0c10, 0); cielo.position.set(0, 1, 0); cielo.userData.i = 0.5; marco.add(cielo);
-    const nuevas = [llave, contra, relleno, cielo];
-    // el logo de la portada, encima del de la gorra (que es más fino): el mismo sitio, el mismo giro, la misma escala
-    const logo1 = crearLogo(INICIO.escala); logo1.rotation.set(...INICIO.rot); logo1.visible = false; marco.add(logo1);
+    // la cámara: de donde la deja el plano 10, a delante del logo (sin cambiar de velocidad en el corte), y de ahí al brillo
+    const posA = H.clone().add(CAM_FINAL.de), posM = LOGO.clone().addScaledVector(N, 2.6).addScaledVector(arriba, 0.25);
+    const ACERCA = Math.min(3, Math.max(1.2, 5.2 * posA.distanceTo(posM) / posA.distanceTo(LOGO.clone().addScaledVector(N, 0.55))));
+    const llegaCam = pasa(2.4, 0), tmp = new THREE.PerspectiveCamera(), mira = V();
 
-    // lo que desaparece: todo lo de la sala menos el logo de la gorra (cada material, una vez)
-    const deLogo = new Set(); logo.traverse((o) => deLogo.add(o));
-    const mats = new Set();
-    set.traverse((o) => { if (o.material && !deLogo.has(o)) [].concat(o.material).forEach((m) => mats.add(m)); });
-    mats.forEach((m) => { m.userData.op = m.opacity; m.userData.tr = m.transparent; m.userData.col = m.color?.clone(); m.userData.em = m.emissive?.clone(); });
-    // el logo de la portada, sin reflejos de entorno, como en el plano 1 (que no tiene: el entorno no gira con el marco)
-    logo1.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { m.envMapIntensity = 0; }); });
+    // la ruta de Blinky: de la tarjeta de la pantalla, por encima de la cabeza, a su sitio junto a la k; ahí se mece, y se mete
+    const ESPERA = G.clone().addScaledVector(N, 0.32).addScaledVector(lado, -0.18).addScaledVector(arriba, 0.06);
+    const vuelo = new THREE.CatmullRomCurve3([Tw.clone(), Tw.clone().addScaledVector(arriba, 0.8), H.clone().addScaledVector(arriba, 1.0).addScaledVector(N, 0.4),
+      ESPERA.clone().addScaledVector(arriba, 0.35).addScaledVector(lado, -0.3), ESPERA]);
+    const ruta = (t) => {
+      if (t < LLEGA) return vuelo.getPointAt(smoother(seg(t, 0.3, LLEGA)));
+      const p = ESPERA.clone().addScaledVector(arriba, 0.025 * Math.sin((t - LLEGA) * 3.2));
+      return p.lerp(G, easeIn(seg(t, METE, METE + 0.4)));
+    };
 
-    const FONDO0 = new THREE.Color(0x0b0e13), FONDO1 = new THREE.Color(0x0b0d10);   // FONDO1, el del plano 1
-    const ACERCA = pasa(2.4, 0);                                       // con la velocidad con que llega el 10
+    // el brillo de la esquina de la k (el del plano 1)
+    const brillo = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaEstrella(), blending: THREE.AdditiveBlending,
+      depthWrite: false, depthTest: false, transparent: true, toneMapped: false }));
+    brillo.position.copy(G).addScaledVector(N, 0.01); brillo.renderOrder = 10; grupo.add(brillo);
+    const BLANCO = new THREE.Color(0xeaf4ff), NEGRO = new THREE.Color(0x000000), velado = new THREE.Color();
+    let bloom0 = 0.55;
+
     return {
-      entrar() { escena.background = FONDO0.clone(); },
+      entrar() { bloom0 = bloom.strength; },
       actualizar(t) {
-        electron.visible = false;
-        habla(dialogo(t, LINEAS), { pos: LOGO, radio: 0.45 });
-        const e = ACERCA(seg(t, 0, 5.2));                                // sigue acercándose desde el corte, sin pararse
-        cam.position.lerpVectors(posA, posF, e);
-        // la cámara sigue mirando al logo, como acaba el 10 (así su giro sigue al mismo ritmo en el corte), y pasa poco a
-        // poco al giro final
-        tmp.position.copy(cam.position); tmp.lookAt(LOGO);
-        cam.quaternion.slerpQuaternions(tmp.quaternion, qF, smoother(seg(t, 0, 5.2)));
-        cam.fov = lerp(CAM_FINAL.fov, INICIO.fov, e);
+        // la cámara: llega delante del logo mirándolo; luego, al brillo
+        const e = llegaCam(seg(t, 0, ACERCA)), entra = smoother(seg(t, 2.7, 3.5));
+        cam.position.lerpVectors(posA, posM, e);
+        cam.position.lerp(G.clone().addScaledVector(N, 0.04), easeIn(entra) * 0.4 + entra * 0.6);
+        mira.copy(LOGO).lerp(G, smooth(seg(t, 2.2, 2.9)));
+        tmp.position.copy(cam.position); tmp.lookAt(mira); cam.quaternion.copy(tmp.quaternion);
+        cam.fov = lerp(CAM_FINAL.fov, 26, smooth(seg(t, 1.5, 3.5)));
 
-        // la sala se apaga y entran las luces de la portada (y su bloom)
-        const apaga = smooth(seg(t, 2.4, 4.8));
-        luces.forEach((l, i) => { l.intensity = base[i] * (1 - apaga); });
-        nuevas.forEach((l) => { l.intensity = l.userData.i * apaga; });
-        contra.intensity = contra.userData.i * smooth(seg(t, 4.4, 5.2));   // la de detrás, cuando ya no está la gorra: si no, le saca un canto azul
-        escena.background.copy(FONDO0).lerp(FONDO1, apaga);
-        bloom.strength = lerp(bloom.strength, 0.55, apaga);
+        // Blinky: sale de la pantalla, vuela a la k, espera hablando y se mete en el brillo
+        electron.visible = t > 0.2 && t < METE + 0.45;
+        electron.ruta = ruta; electron.rutaDesde = 0.2;
+        electron.forma = 1; electron.calor = 0; electron.ojos = 1;
+        electron.tam = TAM * easeBack(seg(t, 0.2, 0.5)) * (1 - easeIn(seg(t, METE + 0.05, METE + 0.42)));
+        electron.brillo = 1 - smooth(seg(t, 0.2, 0.8)) + smooth(seg(t, METE - 0.1, METE + 0.3));
+        electron.estela = smooth(seg(t, 0.35, 0.7)) * (1 - smooth(seg(t, LLEGA, LLEGA + 0.4)));
+        const mx = t < LLEGA ? 0.6 : t < METE - 0.2 ? 0 : 0.8;                // a cámara mientras habla; luego, a la k
+        electron.mirada.set(lerp(electron.mirada.x, mx, 0.2), lerp(electron.mirada.y, t > METE - 0.2 ? -0.3 : 0, 0.2));
+        habla(dialogo(t, LINEAS));
 
-        // y desaparece todo menos el logo: primero se oscurece (si se hiciera transparente sin más, por la gorra se vería
-        // la cabeza) y, ya casi negro contra el fondo, se desvanece
-        const oscurece = 1 - smooth(seg(t, 3.4, 4.4)), va = smooth(seg(t, 3.8, 5.0));
-        mats.forEach((m) => {
-          if (m.userData.col) m.color.copy(m.userData.col).multiplyScalar(oscurece);
-          if (m.userData.em) m.emissive.copy(m.userData.em).multiplyScalar(oscurece);
-          m.envMapIntensity = 1 - apaga;                                 // (los reflejos del entorno se apagan con la sala)
-          m.transparent = va > 0 || m.userData.tr; m.opacity = m.userData.op * (1 - va); m.depthWrite = va < 0.5;
-        });
-        set.visible = va < 0.999;
+        // el brillo: prende, late y, cuando Blinky se mete, crece y se lleva la sala
+        const prende = easeOut(seg(t, 2.3, 2.6)), late = 1 + 0.12 * Math.sin(t * 7);
+        brillo.visible = t > 2.28;
+        brillo.scale.setScalar(0.3 * prende * late * (1 + 0.8 * bell(t, METE + 0.2, METE + 0.5) + 2.5 * smooth(seg(t, 2.9, 3.5))) + 0.0001);
+        brillo.material.rotation = 0.25 * t;
+        brillo.material.color.setScalar(2.6 * prende + 0.01);
+        const apaga = smooth(seg(t, 2.6, 3.4));
+        luces.forEach((l, i) => { l.intensity = base[i] * (1 - 0.6 * apaga); });
+        bloom.strength = bloom0 + 1.4 * smooth(seg(t, 2.6, 3.5));
 
-        // el logo de la gorra pasa a ser el de la portada: aparece encima, tan fino como él, y gana grosor
-        logo.visible = t < 3.4;
-        logo1.visible = t >= 3.4;
-        logo1.scale.set(INICIO.escala, INICIO.escala, INICIO.escala * lerp(0.6 / 1.7, 1, smoother(seg(t, 3.4, 5.2))));
-        // ya solo, empieza a mecerse como en el primer segundo del plano 1, para que el corte no se note
-        // y todo se funde a negro: el corto empieza en negro (plano 1), así que la vuelta al principio casa del todo
-        velo(smooth(seg(t, 4.8, DURA - 0.05)), 0x000000, { fundido: true });
-        logo1.rotation.set(...INICIO.rot); logo1.position.set(0, 0, 0);
-        const w = smoother(seg(t, 4.8, DURA));
-        if (w > 0) {
-          const r0 = logo1.rotation.clone();
-          flota(logo1, tLogo(t - DURA));
-          logo1.rotation.set(lerp(r0.x, logo1.rotation.x, w), lerp(r0.y, logo1.rotation.y, w), 0);
-          logo1.position.y *= w;
-        }
+        // el destello en blanco, que se funde a negro: el final
+        const blanco = smooth(seg(t, 3.0, 3.5)), negro = smooth(seg(t, 3.6, DURA - 0.05));
+        velo(blanco, velado.copy(BLANCO).lerp(NEGRO, negro).getHex(), { fundido: true });
+        set.visible = blanco < 0.999;
 
-        // la persona, como al final del plano 10: sonriendo y parpadeando
+        // la persona, como al final del plano 10: sonriendo y parpadeando (la cabeza, quieta: lleva la k)
         persona.cabeza.rotation.set(-0.05, 0, 0);
         persona.sonreir(1); persona.rubor.opacity = 0.32;
         persona.parpadear(bell((t + 11.2 + 1.5) % 3.7, 0, 0.16));   // el parpadeo sigue la cuenta del plano 10 (11,2 s)

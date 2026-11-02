@@ -185,6 +185,8 @@ export default {
       const falta = LL * (Math.exp(-ka * g) - Math.exp(-ka)) / (1 - Math.exp(-ka));
       return llegada.getPointAt(Math.min(1, Math.max(0, 1 - falta / LL)));
     };
+    // junto al ROCKY100 de verdad, de 4 mm, más pequeño (de 1 mm), y en el corte, TAM_FINAL
+    const tamE = (t) => t < 11.5 ? lerp(1, 0.45, smooth(seg(t, 9.6, 10.9))) : lerp(0.45, TAM_FINAL, smooth(seg(t, 11.55, 12.05)));
     const ruta = (t) => {
       if (t < 0) return previa(t);
       const p = base(t);
@@ -192,6 +194,7 @@ export default {
       const zb = p.z;                                                                     // salto de la bobina
       if (t > 9.6 && t < 10.9) p.y += 0.16 * Math.max(0, 1 - Math.abs(zb - zB) / 0.22);
       p.y += 0.04 * bell(t, 11, 11.3);                                                  // saltito al ver el chip
+      p.y -= 0.12 * (1 - tamE(t)) * (1 - smooth(seg(t, 11.55, 12.05)));                  // (encoge sin despegarse del cobre; en el corte, en la pata)
       return p;
     };
 
@@ -382,8 +385,7 @@ export default {
         electron.calor = 0; electron.brillo = 0.25 * smooth(seg(t, 11.7, 12.1)) + 0.8 * bell(t, 5.1, 5.8);
         electron.ojos = 1;
         electron.estela = t < 0 && t > -ENTRA ? 1 - 0.85 * Math.sin(Math.PI * (t + ENTRA) / ENTRA) : t < 5.3 ? 1 : 0.55;   // muy deprisa, casi sin estela
-        // (junto al ROCKY100 de verdad, de 4 mm, un poco más pequeño)
-        electron.tam = t < 11.5 ? lerp(1, 0.75, smooth(seg(t, 9.6, 10.9))) : lerp(0.75, TAM_FINAL, smooth(seg(t, 11.55, 12.05)));
+        electron.tam = tamE(t);
         const mx = t < 5.0 ? 1 : t < 5.9 ? 0 : t < 9.7 ? 1 : 0;
         const my = t > 4.8 && t < 5.3 ? -0.8 : t > 10.9 && t < 11.6 ? 0.9 : 0;
         electron.mirada.set(lerp(electron.mirada.x, mx, 0.2), lerp(electron.mirada.y, my, 0.2));

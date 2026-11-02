@@ -49,6 +49,7 @@ export const SDA_SENSOR = [KICAD.bordeSensor - 0.06 / 2.2, 85.7];
 const K = QFN.W / ESCALA_CHIP;                         // cuánto más grande es aquí el chip que en el plano 2
 const TAM0 = TAM_FINAL * K;                             // el electrón, a la misma escala frente al chip que al final del 2
 const ALTO = 0.04;                                      // el electrón (tam 0,3) va un poco por encima de lo que pisa
+export const TAM_PLACA = 1.0;                           // y por las pistas de la placa, de su ancho (0,15 mm)
 // La ruta por el die, en (u, v) sobre la foto, por pistas que se ven en ella: del pad de RF al rectificador; los canales
 // de rutado (el horizontal en v ≈ 0,633, el vertical en u ≈ 0,41 y el de abajo en v ≈ 0,82) hasta la lógica digital;
 // dos vueltas dentro de ella por sus buses (el borde con la memoria en u ≈ 0,728, el bus vertical en u ≈ 0,823, el
@@ -149,9 +150,12 @@ export default {
       { t0: 25.9, t1: FIN, curva: aSensor, junta: true, llega: 0.15 },  // llega a la pata del sensor en el corte, aún en marcha
     ]);
     // al empezar es tan grande como al final del plano 2 (frente al chip) y encoge mientras sube: el chip "crece".
-    // Mientras es grande se aparta de la pared y se apoya en la placa, por su radio de más
-    const tam = (t) => lerp(TAM0, 0.3, smoother(seg(t, 0, 1.8)));
-    const ruta = (t) => { const de = 0.12 * (tam(t) - 0.3); return base(t).add(V(-de, de, 0)); };
+    // Mientras es grande se aparta de la pared y se apoya en la placa, por su radio de más. Por las pistas de la placa
+    // (MOSI y SDA) vuelve a crecer, a TAM_PLACA (lo ancho de la pista): con el tamaño del die, allí apenas se le veía
+    const tamDie = (t) => lerp(TAM0, 0.3, smoother(seg(t, 0, 1.8)));
+    const enPlaca = (t) => smoother(seg(t, 16.9, 17.4)) * (1 - smoother(seg(t, 18.0, 18.45))) + smoother(seg(t, 23.5, 24.0)) * (1 - smoother(seg(t, 26.0, 26.5)));
+    const tam = (t) => tamDie(t) + (TAM_PLACA - 0.3) * enPlaca(t);
+    const ruta = (t) => base(t).add(V(-0.12 * (tamDie(t) - 0.3), 0.12 * (tam(t) - 0.3), 0));
 
     // lo que se enciende: la pista del die por donde pasa (tubos que crecen con él), el rectificador, la lógica digital,
     // los bond wires; en la placa, la pista por donde corre (crearRastro); en el micro, sus zonas
