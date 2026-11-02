@@ -11,7 +11,8 @@
 import * as THREE from 'three';
 import { seg, smooth, smoother, bell, lerp, porTramos, porClaves, pasa, dialogo, cajaBisel } from '../utiles.js';
 import { crearMonitor, crearPersona, TARJETA_T } from '../piezas/sala.js';
-import { crearPlanta, OFICINA } from '../piezas/planta.js';
+import { OFICINA } from '../piezas/planta.js';
+import { crearPlantaSerie } from '../../corto2/piezas/sitios.js';
 import { madera, moqueta, teclado, conTexturas } from '../piezas/texturas.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -36,7 +37,7 @@ export function montarSala(grupo) {
     const mat = (color, metal = 0.1, rug = 0.6) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rug });
     // la oficina de la entreplanta de la planta (piezas/planta.js): detrás de la persona, el frente de cristal y, abajo, la
     // planta (la máquina con su tag, la antena, los armarios), que se ve por él; la oficina de la planta se esconde
-    const planta = crearPlanta(); planta.grupo.position.copy(OFICINA).negate(); set.add(planta.grupo); planta.oficina.visible = false;
+    const { planta } = crearPlantaSerie(); planta.grupo.position.copy(OFICINA).negate(); set.add(planta.grupo); planta.oficina.visible = false;
     planta.lamparas.visible = false;                                    // por el cristal, una quedaba justo encima de la gorra
     caja(8, 0.02, 2.95, conTexturas(mat(0x3a3f46, 0.0, 0.95), moqueta(), 8, 2.95), 0, -0.01, 0.825);   // suelo, de moqueta
     caja(8, 3, 0.05, mat(0x1c2129, 0.0, 0.9), 0, 1.5, -0.65);                                  // pared

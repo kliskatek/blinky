@@ -31,7 +31,9 @@ import plano09 from './planos/09-mes-erp.js';
 import plano10 from './planos/10-pantalla.js';
 import plano11 from './planos/11-visera.js';
 
-const modelos = cargarModelos(['rfid_at']);                          // la placa de KiCad del tag (piezas/senseread.js): llega en cuanto se carga
+// las placas de KiCad: llegan en cuanto se cargan. Primero la del tag (piezas/senseread.js), la que se ve de cerca; luego
+// las demás de la planta de la serie (los SenseBLE, el SenseNFC), que se ven de lejos
+const modelos = cargarModelos(['rfid_at']).then(() => cargarModelos());
 const PLANOS = [plano01, plano02, plano03, plano04, plano05, plano06, plano07, plano08, plano09, plano10, plano11];
 
 // ------------------------------------------------------------------ escena, cámara y posproceso

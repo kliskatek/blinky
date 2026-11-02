@@ -14,7 +14,8 @@
 
 import * as THREE from 'three';
 import { seg, smooth, smoother, bell, lerp, porTramos, porClaves, dialogo, pasa } from '../utiles.js';
-import { crearPlanta, ARMARIO } from '../piezas/planta.js';
+import { ARMARIO } from '../piezas/planta.js';
+import { crearPlantaSerie } from '../../corto2/piezas/sitios.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const S = 10, TAM = 0.35;
@@ -43,7 +44,7 @@ export default {
     // el armario eléctrico de la planta (piezas/planta.js), con el origen del armario (crearArmario) en el del set: el
     // lector, en su balda a la izquierda, con su Ethernet (+X) mirando al PLC; a la derecha, la canaleta hacia el edge
     const set = new THREE.Group(); set.scale.setScalar(S); grupo.add(set);
-    const planta = crearPlanta(); planta.grupo.position.copy(ARMARIO).negate(); set.add(planta.grupo);
+    const { planta } = crearPlantaSerie(); planta.grupo.position.copy(ARMARIO).negate(); set.add(planta.grupo);
     const arm = planta.armario, lector = planta.lector;
     planta.verArmario(1);                                            // dentro del armario: la puerta, transparente
     set.updateMatrixWorld(true);

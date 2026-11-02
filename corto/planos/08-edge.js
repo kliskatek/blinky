@@ -11,7 +11,8 @@
 //           dice que nunca había tenido esta forma; 8.2-9 sube; destello cian, en su pico el corte al plano 9
 
 import * as THREE from 'three';
-import { crearPlanta, ARMARIO } from '../piezas/planta.js';
+import { ARMARIO } from '../piezas/planta.js';
+import { crearPlantaSerie } from '../../corto2/piezas/sitios.js';
 import { seg, smooth, smoother, easeBack, easeOut, bell, lerp, rng, porTramos, porClaves, texturaPunto, dialogo, pasa } from '../utiles.js';
 import { crearPaquete } from '../piezas/paquete.js';
 import { cartel } from '../piezas/cartel.js';
@@ -45,7 +46,7 @@ export default {
     const set = new THREE.Group(); set.scale.setScalar(S); A.add(set);
     // el armario de la planta (piezas/planta.js), con el origen del set en el de su placa de montaje, como el plano 7: el
     // edge (piezas/edge.js), de pie en el carril a la derecha del PLC, con los puertos abajo
-    const planta = crearPlanta(); planta.grupo.position.copy(ARMARIO).negate(); set.add(planta.grupo);
+    const { planta } = crearPlantaSerie(); planta.grupo.position.copy(ARMARIO).negate(); set.add(planta.grupo);
     planta.verArmario(1);                                            // dentro del armario: la puerta, transparente
     const mat = (color, metal = 0.3, rug = 0.5, o = {}) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rug, ...o });
     const edge = planta.edge.grupo, aletas = planta.edge.aletas, ledsE = planta.edge.leds;   // el de la planta (piezas/edge.js)

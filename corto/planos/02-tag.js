@@ -32,7 +32,8 @@ import * as THREE from 'three';
 import { seg, smooth, smoother, bell, lerp, rng, porTramos, porClaves, texturaPunto, dialogo, pasa } from '../utiles.js';
 import { ponerTag, W as enTag, E, Y_CARA, KICAD, SOBRE } from '../piezas/senseread.js';
 import { QFN } from '../piezas/rocky.js';
-import { crearPlanta, TAG as TAG_PLANTA, OFICINA, GEN, MAQ as MAQUINA } from '../piezas/planta.js';
+import { TAG as TAG_PLANTA, OFICINA, GEN, MAQ as MAQUINA } from '../piezas/planta.js';
+import { crearPlantaSerie } from '../../corto2/piezas/sitios.js';
 import { Electron } from '../electron.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -76,8 +77,8 @@ const GIRO = TAG_PLANTA.rotY - Math.PI, EJE_Y = new THREE.Vector3(0, 1, 0);
 export const enPlanta = (p) => p.clone().sub(TAG_PLANTA.pos).multiplyScalar(PLANTA).applyAxisAngle(EJE_Y, GIRO);   // de metros de la planta al mundo
 export const dirEnPlanta = (d) => d.clone().applyAxisAngle(EJE_Y, GIRO);   // y una dirección
 export function montarTag(grupo) {
-  const planta = crearPlanta(); planta.grupo.scale.setScalar(PLANTA); planta.grupo.rotation.y = GIRO; planta.grupo.position.copy(enPlanta(V(0, 0, 0))); grupo.add(planta.grupo);
-  planta.tagSimple.visible = false;
+  const { planta, sitios } = crearPlantaSerie(); planta.grupo.scale.setScalar(PLANTA); planta.grupo.rotation.y = GIRO; planta.grupo.position.copy(enPlanta(V(0, 0, 0))); grupo.add(planta.grupo);
+  sitios.motor.grupo.visible = false;                              // (el tag de la planta: este plano pone el suyo, abajo)
   const tag = ponerTag(grupo);
   const yPista = Y_CARA + 0.13;                                    // sobre el cobre, con el radio del electrón
   // el dipolo; la alimentación de RF+ (a la pata 1 del ROCKY100), hasta donde acaba, junto al chip; la bobina LM2

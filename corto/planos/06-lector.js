@@ -14,7 +14,8 @@
 
 import * as THREE from 'three';
 import { seg, smooth, smoother, bell, lerp, rng, porTramos, porClaves, texturaPunto, dialogo, pasa } from '../utiles.js';
-import { crearPlanta, ANTENA_POS } from '../piezas/planta.js';
+import { ANTENA_POS } from '../piezas/planta.js';
+import { crearPlantaSerie } from '../../corto2/piezas/sitios.js';
 import { TRAS_VUELO } from './05-vuelta.js';
 import { CAM_INICIO7 } from './07-plc.js';
 import { PLC_REPOSO } from '../piezas/plc.js';
@@ -50,7 +51,7 @@ export default {
     // está en su balda (como lo encuentra el plano 7)
     const set = new THREE.Group(); set.scale.setScalar(S); grupo.add(set);
     const O6 = V(ANTENA_POS.x, 0, ANTENA_POS.z);
-    const planta = crearPlanta(); planta.grupo.position.copy(O6).negate(); set.add(planta.grupo);
+    const { planta } = crearPlantaSerie(); planta.grupo.position.copy(O6).negate(); set.add(planta.grupo);
     const lector = planta.lector, ant = planta.antena;
     set.updateMatrixWorld(true);
     const enSet = (v, obj) => v.clone().applyMatrix4(obj.matrix).sub(O6);    // local de un aparato → metros del set

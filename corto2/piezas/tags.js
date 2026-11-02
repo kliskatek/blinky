@@ -56,7 +56,7 @@ function juntar(raiz, fuera = null) {
   return out;
 }
 // cada modelo, una sola vez: quien lo pida después recibe la misma promesa. Sin lista, todos; con ella, solo esos (el
-// episodio 1 solo usa rfid_at: los seis eran 18 MB)
+// episodio 1 pide antes rfid_at, el que ve de cerca, y luego los demás: los seis son 18 MB)
 const cargando = {};
 export function cargarModelos(claves = Object.keys(ARCHIVOS)) {
   const carga = new GLTFLoader();
