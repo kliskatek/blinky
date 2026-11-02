@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { cajaRedonda } from './tag.js';
 
 export const REGISTRO = [
-  ['SID-0042', '#9fe8ff'],
+  ['SR-0042', '#9fe8ff'],
   ['T    41.8 °C', '#ffb07a'],
   ['P    2.41 bar', '#e8f6ff'],
   ['PROX 1  IO-L 63 %', '#e8f6ff'],

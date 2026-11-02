@@ -80,14 +80,14 @@
 {
 "t": 61.7,
 "f": "14.mp3",
-"d": 4.63,
-"x": "Y ese condensador se llena: guarda energía para que el chip no se apague."
+"d": 3.84,
+"x": "Aquí, un regulador: tensión estable para todo el chip."
 },
 {
 "t": 63.8,
 "f": "15.mp3",
-"d": 3.84,
-"x": "Aquí, un regulador: tensión estable para todo el chip."
+"d": 5.35,
+"x": "Y el monitor de tensión: con energía de sobra, cierra el interruptor y enciende el chip."
 },
 {
 "t": 67.4,

@@ -60,7 +60,7 @@ export function crearMonitor() {
         x.fillStyle = '#ffffff'; x.fillRect(cx - 3, cy - s * 0.45, 6, s * 0.75); x.fillRect(cx - 3, cy + s * 0.42, 6, 6);
       }
     };
-    tarjeta(0, 'Temperatura motor', q > 0 ? '41.8 °C' : '41.0 °C', q > 0 ? '#ff5a4a' : '#c9d6e2', q > 0 ? 'ALERTA · T > 41,5 °C' : 'SID-0041 · hace 1 min');
+    tarjeta(0, 'Temperatura motor', q > 0 ? '41.8 °C' : '41.0 °C', q > 0 ? '#ff5a4a' : '#c9d6e2', q > 0 ? 'ALERTA · T > 41,5 °C' : 'SR-0041 · hace 1 min');
     tarjeta(1, 'Presión', '2.41 bar', '#c9d6e2', 'transmisor 4-20 mA');
     tarjeta(2, 'Presencia de pieza', 'Sí', '#c9d6e2', 'sensor inductivo');
     tarjeta(3, 'Nivel', '63 %', '#c9d6e2', 'IO-Link');
@@ -88,7 +88,7 @@ export function crearMonitor() {
     const lx = 1030, ly = 430, lw = 530;
     rect(x, lx, ly, lw, gh, 18); x.fillStyle = '#0e1726'; x.fill();
     x.font = '500 30px Oxanium, "Segoe UI", sans-serif'; x.fillStyle = '#8fa4b8'; x.fillText(L('Registros'), lx + 24, ly + 48);
-    const filas = [['SID-0042', '41.8', q > 0], ['SID-0041', '41.0'], ['SID-0040', '40.4'], ['SID-0039', '40.1'], ['SID-0038', '39.6']].filter((f, i) => q > 0 || i > 0);
+    const filas = [['SR-0042', '41.8', q > 0], ['SR-0041', '41.0'], ['SR-0040', '40.4'], ['SR-0039', '40.1'], ['SR-0038', '39.6']].filter((f, i) => q > 0 || i > 0);
     filas.forEach(([tag, v, nuevo], i) => {
       const y = ly + 100 + i * 56;
       if (nuevo) { x.fillStyle = `rgba(255,60,50,${0.15 + 0.35 * q})`; x.fillRect(lx + 12, y - 42, lw - 24, 58); }

@@ -1,5 +1,5 @@
 // Los textos del corto en inglés, euskera y chino; la clave es el texto en español, tal como está en el código
-// (idioma.js los busca con L()). Lo que es marca, código o técnico (ROCKY100, SID-0042, PLC RUN, EDGE…) no se traduce.
+// (idioma.js los busca con L()). Lo que es marca, código o técnico (ROCKY100, SR-0042, PLC RUN, EDGE…) no se traduce.
 export default {
   // la interfaz
   'Blinky presenta': { en: 'Blinky presents', eu: 'Blinkyk aurkezten du', zh: 'Blinky 呈现' },
@@ -45,8 +45,8 @@ export default {
     zh: '它推动电流流向芯片。我们跟上！' },
   '¡La energía está entrando por aquí! ¡Yo también voy!': { en: 'The energy is going in here! I’m going too!', eu: 'Energia hemendik sartzen ari da! Ni ere banoa!', zh: '能量从这里进去了！我也去！' },
   '¡Un multiplicador de tensión! Me está cargando de energía.': { en: 'A voltage multiplier! It’s charging me up.', eu: 'Tentsio-biderkatzaile bat! Energiaz kargatzen ari nau.', zh: '电压倍增器！它在给我充能。' },
-  '¡Y ese condensador se está llenando!': { en: 'And that capacitor is filling up!', eu: 'Eta kondentsadore hori betetzen ari da!', zh: '那个电容正在充满！' },
   'Aquí, un regulador: tensión estable para todo el chip.': { en: 'Here, a regulator: steady voltage for the whole chip.', eu: 'Hemen, erregulagailu bat: tentsio egonkorra txip osorako.', zh: '这里是稳压器：为整个芯片提供稳定电压。' },
+  'Y el monitor de tensión: cierra el interruptor y enciende el chip.': { en: 'And the voltage monitor: it closes the switch and turns the chip on.', eu: 'Eta tentsio-monitorea: etengailua itxi eta txipa pizten du.', zh: '还有电压监测器：它闭合开关，让芯片开始工作。' },
   '¡Mira! Circuitos digitales que hablan el protocolo RAIN.': { en: 'Look! Digital circuits that speak the RAIN protocol.', eu: 'Begira! RAIN protokoloa hitz egiten duten zirkuitu digitalak.', zh: '看！会说 RAIN 协议的数字电路。' },
   'Y una memoria con datos guardados: el EPC de este tag.': { en: 'And a memory with stored data: this tag’s EPC.', eu: 'Eta datuak gordeta dituen memoria bat: etiketa honen EPCa.', zh: '还有存着数据的存储器：这个标签的 EPC。' },
   'El chip me manda por SPI al micro…': {
@@ -165,7 +165,7 @@ export default {
   '1 alerta activa': { en: '1 active alert', eu: 'Alerta aktibo 1', zh: '1 条活动警报' },
   'Temperatura motor': { en: 'Motor temperature', eu: 'Motorraren tenperatura', zh: '电机温度' },
   'ALERTA · T > 41,5 °C': { en: 'ALERT · T > 41.5 °C', eu: 'ALERTA · T > 41,5 °C', zh: '警报 · T > 41.5 °C' },
-  'SID-0041 · hace 1 min': { en: 'SID-0041 · 1 min ago', eu: 'SID-0041 · duela 1 min', zh: 'SID-0041 · 1 分钟前' },
+  'SR-0041 · hace 1 min': { en: 'SR-0041 · 1 min ago', eu: 'SR-0041 · duela 1 min', zh: 'SR-0041 · 1 分钟前' },
   'Presión': { en: 'Pressure', eu: 'Presioa', zh: '压力' },
   'transmisor 4-20 mA': { en: '4-20 mA transmitter', eu: '4-20 mA transmisorea', zh: '4-20 mA 变送器' },
   'Presencia de pieza': { en: 'Part present', eu: 'Pieza bai/ez', zh: '工件到位' },

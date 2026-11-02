@@ -10,8 +10,9 @@
 // cerrado), donde se queda pegado: corte con destello al plano 4. Por donde pasa, la pista se queda encendida (en el die,
 // con tubos; en la placa, con crearRastro).
 // Por el die del ROCKY100 va contando lo que ve (el tramo del die va a 3/4 de velocidad, tr() lo estira, para que dé
-// tiempo a leerlo): el multiplicador de tensión, el condensador que se carga, el regulador, la lógica RAIN y la memoria
-// (las zonas se encienden cuando las nombra). Los tiempos de abajo son sin estirar.
+// tiempo a leerlo): el multiplicador de tensión, el regulador, el monitor de tensión con su interruptor (la compuerta de
+// la serie: con energía de sobra, se cierra y enciende el chip), la lógica RAIN y la memoria (las zonas se encienden
+// cuando las nombra). Los tiempos de abajo son sin estirar.
 //   0-0.35  sale del destello del corte
 //   0.3-2.8 encoge mientras sube por la pata RF+ y el bond wire hasta el pad de RF (de un tramo a otro sin pararse)
 //   2.8-4.9 el rectificador: se enciende y el electrón se carga
@@ -70,8 +71,8 @@ const FIN = 27.0;
 // lo que dice, en tiempos de la ruta
 const LINEAS = [
   [3.0, 4.75, '¡Un multiplicador de tensión! Me está cargando de energía.'],
-  [5.0, 6.5, '¡Y ese condensador se está llenando!'],
-  [6.6, 8.5, 'Aquí, un regulador: tensión estable para todo el chip.'],
+  [5.0, 6.5, 'Aquí, un regulador: tensión estable para todo el chip.'],
+  [6.6, 8.5, 'Y el monitor de tensión: cierra el interruptor y enciende el chip.'],
   [8.8, 11.2, '¡Mira! Circuitos digitales que hablan el protocolo RAIN.'],
   [11.4, 14.0, 'Y una memoria con datos guardados: el EPC de este tag.'],
   [14.6, 17.8, 'El chip me manda por SPI al micro…'],
@@ -179,13 +180,11 @@ export default {
     const zona = zonaEn(padEn, QFN.dw, QFN.dh), zonaM = zonaEn((u, v, a) => enM(mc.padEn(u, v, a)), MCU.dw, MCU.dh);
     const rectificador = zona(0.17, 0.44, 0.31, 0.62, 0xff8a2a);
     const digital = zona(0.612, 0.2, 0.735, 0.775, 0x3d9bff);
-    // las que nombra por el camino: el condensador (se llena de abajo arriba), el regulador y la memoria. Con los colores
-    // de la serie (corto/LENGUAJE.md): la energía guardada, en el azul claro del depósito; el control de la energía, en
-    // el azul del monitor (el turquesa es de BLE)
-    const condensador = zona(0.29, 0.66, 0.39, 0.80, 0x5fb4ff, true);
-    const regulador = zona(0.43, 0.66, 0.58, 0.79, 0x3d9bff, true);
+    // las que nombra por el camino: el regulador, el monitor de tensión con su interruptor y la memoria. Con los colores
+    // de la serie (corto/LENGUAJE.md): el control de la energía, en el azul del monitor (el turquesa es de BLE)
+    const regulador = zona(0.29, 0.66, 0.39, 0.80, 0x3d9bff, true);
+    const monitor = zona(0.43, 0.66, 0.58, 0.79, 0x3d9bff, true);
     const memoria = zona(0.738, 0.185, 0.905, 0.80, 0xffb15a);             // la de fuera, junto a los pads
-    const vCond = padEn(0.34, 0.80, 0.004).z, altoCond = 0.14 * QFN.dh;
     // el micro: el SPI, el núcleo (trabaja: parpadea) y el I²C, cada uno cuando pasa por él (en el azul de la lógica)
     const mSPI = zonaM(...ZONAS_M.spi, 0x3d9bff), mNucleo = zonaM(...ZONAS_M.nucleo, 0x3d9bff), mI2C = zonaM(...ZONAS_M.i2c, 0x3d9bff);
     // la lógica trabajando mientras pasa: celdas que parpadean, cada una a su ritmo
@@ -248,10 +247,9 @@ export default {
 
         const carga = bell(t, 3.6, 5.2);
         rectificador.material.opacity = 0.32 * carga;
-        const llena = smooth(seg(t, 5.0, 6.6));
-        condensador.scale.y = Math.max(0.001, llena); condensador.position.z = vCond - altoCond * llena / 2;
-        condensador.material.opacity = 0.6 * llena * (1 - smooth(seg(t, 9.0, 10.0)));
-        regulador.material.opacity = 0.45 * bell(t, 6.4, 8.8) * (0.8 + 0.2 * Math.sin(t * 9));
+        regulador.material.opacity = 0.45 * bell(t, 4.9, 6.8);
+        // el monitor: se enciende al nombrarlo y, cuando cierra el interruptor, da un golpe de luz (enciende el chip)
+        monitor.material.opacity = 0.4 * bell(t, 6.4, 8.8) + 0.35 * bell(t, 7.4, 7.9);
         memoria.material.opacity = 0.32 * bell(t, 11.2, 14.4);
         const dentro = smooth(seg(t, 8.0, 8.8)) * (1 - smooth(seg(t, 14.6, 15.6)));
         digital.material.opacity = dentro * (0.1 + 0.04 * Math.sin(t * 7));   // (más, con él dentro, quemaba la foto del die)

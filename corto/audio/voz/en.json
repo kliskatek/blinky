@@ -80,14 +80,14 @@
 {
 "t": 61.7,
 "f": "14.mp3",
-"d": 5.11,
-"x": "And that capacitor fills up: it stores energy so the chip stays on."
+"d": 4.32,
+"x": "Here, a regulator: steady voltage for the whole chip."
 },
 {
 "t": 63.8,
 "f": "15.mp3",
-"d": 4.32,
-"x": "Here, a regulator: steady voltage for the whole chip."
+"d": 6.26,
+"x": "And the voltage monitor: with energy to spare, it closes the switch and turns the chip on."
 },
 {
 "t": 67.4,
