@@ -15,6 +15,7 @@
 // el operario de pie (la gente no es de la planta: cada corto pone la suya).
 
 import * as THREE from 'three';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { crearTagUHF, crearTagNFC, crearInlay } from './tags.js';
 import { crearEmisor } from './aparatos.js';
 import { crearAntenaPanel } from '../../corto/piezas/lector.js';
@@ -241,20 +242,91 @@ function crearFachada() {
     caja(0.9, 0.08, 0.1, acero, XC + 0.0, 5, z);
     caja(0.45, 0.06, 0.22, luz, XC + 0.3, 4.95, z).userData.sinSombra = true;
   }
-  // los árboles, en la hierba: tronco y copa de tres bolas, cada uno a su tamaño (al azar, pero siempre el mismo)
-  let semilla = 7; const azar = () => ((semilla = (semilla * 16807) % 2147483647) / 2147483647);
-  const tronco = mat(0x5a4330, 0.0, 0.9), hojas = [mat(0x2f5a2a, 0.0, 0.85), mat(0x3a6b30, 0.0, 0.85), mat(0x28502a, 0.0, 0.85)];
-  const bola = new THREE.IcosahedronGeometry(1, 1), palo = new THREE.CylinderGeometry(0.12, 0.18, 1, 10);
-  for (let z = -9; z < 8; z += 2.2) for (const fila of [0, 1, 2]) {
-    if (azar() < 0.25) continue;
-    const x = XH + 2 + fila * 3.4 + azar() * 1.6, zz = z + azar() * 1.4, h = 2.4 + azar() * 1.6, r = 1.0 + azar() * 0.6;
-    const t = new THREE.Mesh(palo, tronco); t.scale.set(1, h, 1); t.position.set(x, h / 2, zz); g.add(t);
-    for (let k = 0; k < 3; k++) {
-      const b = new THREE.Mesh(bola, hojas[(k + fila) % 3]); b.scale.setScalar(r * (0.75 + 0.3 * azar()));
-      b.position.set(x + (azar() - 0.5) * r, h + r * (0.3 + 0.5 * azar()), zz + (azar() - 0.5) * r); g.add(b);
-    }
-  }
+  // los árboles, en la hierba de detrás de la carretera, y los setos de su borde
+  g.add(crearArboles(XH + 1.4, XF - 0.9, -9.3, 7.8));
   return { grupo: g };
+}
+
+// Los árboles de fuera: frondosos (el tronco con dos ramas y la copa de varias bolas abolladas) y algún abeto (pisos de
+// conos con el borde dentado), repartidos al azar sin pisarse, cada uno a su tamaño y con su verde; y, en el borde de la
+// carretera, un seto. Las hojas, más oscuras abajo y dentro de la copa y más claras arriba (color por vértice: es lo que
+// les da volumen de noche). Al azar, pero siempre igual (semilla fija); todo en dos mallas, troncos y hojas
+function crearArboles(x0, x1, z0, z1) {
+  let semilla = 7; const azar = () => ((semilla = (semilla * 16807) % 2147483647) / 2147483647);
+  const troncos = [], hojas = [], col = new THREE.Color();
+  // una pieza, puesta en su sitio y sin lo que no se junta (uv); las hojas, con su color por vértice: c(y) da el tono
+  const poner = (geo, m, lista, c = null) => {
+    const g2 = (geo.index ? geo.toNonIndexed() : geo).applyMatrix4(m); g2.deleteAttribute('uv');
+    if (c) { const p = g2.attributes.position, a = new Float32Array(p.count * 3); for (let i = 0; i < p.count; i++) { c(p.getX(i), p.getY(i), p.getZ(i)); a.set([col.r, col.g, col.b], 3 * i); } g2.setAttribute('color', new THREE.BufferAttribute(a, 3)); }
+    lista.push(g2);
+  };
+  const M = (x, y, z, s = [1, 1, 1], rx = 0, rz = 0, ry = 0) => new THREE.Matrix4().compose(V(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), V(...s));
+  // una bola abollada: el bulto depende solo del punto (así los vértices repetidos de la malla se mueven igual y no se abre)
+  const abollada = (k) => {
+    const geo = new THREE.IcosahedronGeometry(1, 2), p = geo.attributes.position, f = [azar() * 6, azar() * 6, azar() * 6];
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const r = 1 + k * (0.55 * Math.sin(3.1 * x + f[0]) * Math.sin(2.9 * y + f[1]) * Math.sin(3.3 * z + f[2]) + 0.25 * Math.sin(7.3 * x + 5.1 * z + f[1]));
+      p.setXYZ(i, x * r, y * r * 0.85, z * r);
+    }
+    geo.deleteAttribute('normal'); geo.deleteAttribute('uv');                       // (si no, los vértices repetidos no se juntan)
+    const lisa = mergeVertices(geo); lisa.computeVertexNormals(); return lisa;      // (con las normales suavizadas: sin caras)
+  };
+  // el tono de las hojas en un punto: del verde del árbol, según lo alto en la copa (y0..y1) y lo lejos del eje (fuera, más
+  // luz), con manchas: los ramilletes, unos más claros y otros más oscuros
+  const tono = (base, cx, cz, y0, y1, R) => (x, y, z) => {
+    const u = Math.min(1, Math.max(0, (y - y0) / (y1 - y0))), fuera = Math.min(1, Math.hypot(x - cx, z - cz) / R);
+    const mancha = Math.sin(9.1 * x + 3.7 * y) * Math.sin(8.3 * z - 2.9 * y) * Math.sin(7.7 * y + 5.3 * x);
+    col.copy(base).multiplyScalar((0.4 + 0.5 * u + 0.2 * fuera) * (0.85 + 0.3 * mancha));
+  };
+  const frondoso = (x, z) => {
+    const h = 1.1 + azar() * 0.8, rt = 0.12 + azar() * 0.07, R = 1.4 + azar() * 0.9, inclina = (azar() - 0.5) * 0.08;
+    poner(new THREE.CylinderGeometry(rt * 0.6, rt, h + R * 0.5, 8), M(x, (h + R * 0.5) / 2, z, [1, 1, 1], inclina, inclina), troncos);
+    for (let k = 0; k < 2; k++) {                                                                    // dos ramas, hacia la copa
+      const a = azar() * Math.PI * 2, l = R * 0.7;
+      poner(new THREE.CylinderGeometry(rt * 0.25, rt * 0.45, l, 6), M(x + Math.cos(a) * l * 0.3, h + l * 0.35, z + Math.sin(a) * l * 0.3, [1, 1, 1], Math.sin(a) * 0.7, -Math.cos(a) * 0.7), troncos);
+    }
+    const base = new THREE.Color().setHSL(0.22 + azar() * 0.1, 0.32 + azar() * 0.18, 0.13 + azar() * 0.08), cy = h + R * 0.75;
+    const n = 12 + Math.floor(azar() * 6), c = tono(base, x, z, h - 0.2, cy + R, R);
+    for (let k = 0; k < n; k++) {                                                                    // la copa: bolas por un elipsoide
+      const a = azar() * Math.PI * 2, u = Math.sqrt(azar()), r = R * (0.3 + 0.2 * azar());
+      const bx = x + Math.cos(a) * u * R * 0.75, bz = z + Math.sin(a) * u * R * 0.75, by = cy + (azar() - 0.45) * R * 0.9 * (1 - 0.4 * u);
+      poner(abollada(0.22), M(bx, by, bz, [r, r, r], 0, 0, azar() * 6), hojas, c);
+    }
+  };
+  const abeto = (x, z) => {
+    const H = 3.2 + azar() * 2.2, R = 0.9 + azar() * 0.5, pisos = 5;
+    poner(new THREE.CylinderGeometry(0.08, 0.14, 0.9, 8), M(x, 0.45, z), troncos);
+    const base = new THREE.Color().setHSL(0.31 + azar() * 0.05, 0.3 + azar() * 0.12, 0.08 + azar() * 0.04), c = tono(base, x, z, 0.5, H, R);
+    for (let k = 0; k < pisos; k++) {
+      const u = k / pisos, r = R * (1 - 0.8 * u), alto = H * 0.34 * (1 - 0.35 * u), y = 0.6 + (H - 0.6) * u * 0.92 + alto / 2;
+      const cono = new THREE.ConeGeometry(r, alto, 14, 2), p = cono.attributes.position;
+      for (let i = 0; i < p.count; i++) {                                                           // el borde de abajo, dentado y caído
+        if (p.getY(i) > -alto / 2 + 1e-4) continue;
+        const a = Math.atan2(p.getZ(i), p.getX(i)), d = 1 + 0.18 * Math.sin(a * 7 + k);
+        p.setXYZ(i, p.getX(i) * d, p.getY(i) - 0.08 * d, p.getZ(i) * d);
+      }
+      cono.computeVertexNormals();
+      poner(cono, M(x, y, z, [1, 1, 1], 0, 0, azar() * 6), hojas, c);
+    }
+  };
+  // dónde: puntos al azar, cada uno a 2,3 m como poco de los demás; uno de cada tres, abeto
+  const sitios = [];
+  for (let intento = 0; intento < 400 && sitios.length < 34; intento++) {
+    const x = x0 + azar() * (x1 - x0), z = z0 + azar() * (z1 - z0);
+    if (sitios.every(([a, b]) => Math.hypot(a - x, b - z) > 2.3)) sitios.push([x, z]);
+  }
+  sitios.forEach(([x, z]) => (azar() < 0.33 ? abeto : frondoso)(x, z));
+  // el seto, en el borde de la hierba que da a la carretera: dos filas de bolas que se pisan, a alturas distintas
+  const verdeSeto = new THREE.Color().setHSL(0.27, 0.38, 0.14);
+  for (const fila of [0, 1]) for (let z = z0 + 0.2 + fila * 0.17; z < z1; z += 0.32 + azar() * 0.12) {
+    const r = 0.32 + azar() * 0.14, xs = x0 - 0.85 + fila * 0.3, c = tono(verdeSeto, xs, z, 0, 0.9, 0.6);
+    poner(abollada(0.3), M(xs + (azar() - 0.5) * 0.1, 0.35 + azar() * 0.15, z, [r, r * 1.2, r]), hojas, c);
+  }
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(mergeGeometries(troncos), mat(0x4a3828, 0.0, 0.95)));
+  g.add(new THREE.Mesh(mergeGeometries(hojas), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0 })));
+  return g;
 }
 
 // ---------------------------------------------------------------- la nave del SenseBLE
