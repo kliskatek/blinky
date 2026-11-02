@@ -176,7 +176,9 @@ function texturaDientes() {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 16; return t;
 }
 
-export function crearPersona() {
+// Con { pie: true }, de pie y sin silla (el episodio 2): las piernas rectas, cada una en su grupo con el giro en la cadera
+// (piernas, para andar), y las manos delante del pecho, para sostener un aparato (manos: sus grupos)
+export function crearPersona({ pie = false } = {}) {
   const g = new THREE.Group();
   // los colores: camisa azul de Kliskatek, peto naranja, piel, barba castaña; gorra marino (para que el logo se lea)
   const camisaM = mat(0x1f5fa8, 0.0, 0.78), camisa2M = mat(0x184d8a, 0.0, 0.8), petoM = mat(0xf08a24, 0.0, 0.8);
@@ -186,6 +188,7 @@ export function crearPersona() {
   const gorraM = mat(0x16263c, 0.0, 0.6), gorra2M = mat(0x0f1b2c, 0.0, 0.7), botaM = mat(0x4a3022, 0.0, 0.5), suelaM = mat(0x1c1a18, 0.0, 0.85);
   // la silla, sencilla
   const silla = mat(0x23272d, 0.2, 0.6);
+  if (!pie) {
   const asiento = new THREE.Mesh(cajaBisel(0.46, 0.06, 0.44, 0.015), silla); asiento.position.set(0, 0.47, 0.02); g.add(asiento);
   const respaldo = new THREE.Mesh(cajaBisel(0.44, 0.5, 0.05, 0.015), silla); respaldo.position.set(0, 0.8, 0.26); respaldo.rotation.x = -0.12; g.add(respaldo);
   const columna = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.42, 32), mat(0x9aa0a6, 0.7, 0.3)); columna.position.set(0, 0.24, 0.02); g.add(columna);
@@ -195,6 +198,7 @@ export function crearPersona() {
     const a = k * Math.PI * 2 / 5 + 0.3, fin = new V3(0.27 * Math.cos(a), 0.05, 0.02 + 0.27 * Math.sin(a));
     g.add(cilindro(new V3(0, 0.07, 0.02), fin, 0.018, metal));
     const r = new THREE.Mesh(new THREE.SphereGeometry(0.026, 24, 16), rueda); r.position.copy(fin).setY(0.026); g.add(r);
+  }
   }
 
   // ---- el cuerpo: una pieza de torno con forma de pera (hombros redondos, barriga), aplastada de delante a atrás
@@ -295,13 +299,16 @@ export function crearPersona() {
   espalda.position.copy(sup(0, 0.95, 0.002)); espalda.rotation.x = 0.06; g.add(espalda);
 
   // ---- los brazos: mangas largas, con el codo doblado; las manos sobre el teclado, con sus dedos
+  // (de pie: los codos pegados al cuerpo y las manos delante del pecho, para sostener un aparato)
+  const manos = [];
   for (const s of [-1, 1]) {
-    const hombro = new V3(s * 0.175, 1.01, 0.0), codo = new V3(s * 0.235, 0.84, -0.2), muneca = new V3(s * 0.15, 0.805, -0.43);
+    const hombro = new V3(s * 0.175, 1.01, 0.0), codo = pie ? new V3(s * 0.22, 0.8, -0.08) : new V3(s * 0.235, 0.84, -0.2),
+      muneca = pie ? new V3(s * 0.11, 0.86, -0.3) : new V3(s * 0.15, 0.805, -0.43);
     g.add(cilindro(hombro, codo, 0.058, camisaM)); g.add(cilindro(codo, muneca, 0.052, camisaM));
     const brazo = muneca.clone().sub(codo).normalize();
     const puno = new THREE.Mesh(new THREE.TorusGeometry(0.047, 0.01, 14, 48), camisa2M);
     puno.position.copy(muneca).addScaledVector(brazo, -0.012); puno.quaternion.setFromUnitVectors(new V3(0, 0, 1), brazo); g.add(puno);
-    const mano = new THREE.Group(); mano.position.copy(muneca); mano.rotation.y = Math.atan2(-brazo.x, -brazo.z); g.add(mano);
+    const mano = new THREE.Group(); mano.position.copy(muneca); mano.rotation.y = Math.atan2(-brazo.x, -brazo.z); g.add(mano); manos.push(mano);
     const palma = new THREE.Mesh(new THREE.SphereGeometry(0.042, 40, 28), pielM); palma.scale.set(1.08, 0.56, 1.1); palma.position.set(0, -0.002, -0.04); mano.add(palma);
     [[-0.026, 0.028], [-0.009, 0.034], [0.009, 0.033], [0.026, 0.026]].forEach(([x, l]) => {
       const k = new V3(x * s, -0.003, -0.074), tip = new V3(x * 1.08 * s, -0.016, -0.074 - l);
@@ -309,12 +316,16 @@ export function crearPersona() {
     });
     mano.add(cilindro(new V3(-s * 0.035, -0.004, -0.034), new V3(-s * 0.058, -0.012, -0.064), 0.013, pielM));   // el pulgar, por dentro
   }
-  // ---- las piernas, sentadas, con el bajo vuelto; y las botas
+  // ---- las piernas, sentadas (o de pie: rectas, cada una girando en su cadera), con el bajo vuelto; y las botas
+  const piernas = [];
   for (const s of [-1, 1]) {
-    const cadera = new V3(s * 0.1, 0.575, 0.0), rodilla = new V3(s * 0.11, 0.55, -0.36), tobillo = new V3(s * 0.11, 0.15, -0.4);
-    g.add(cilindro(cadera, rodilla, 0.075, petoM)); g.add(cilindro(rodilla, tobillo, 0.062, petoM));
-    const bajo = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.012, 14, 48), petoM); bajo.rotation.x = Math.PI / 2; bajo.position.set(s * 0.11, 0.15, -0.4); g.add(bajo);
-    const bota = new THREE.Group(); bota.position.set(s * 0.11, 0, -0.43); g.add(bota);
+    const cadera = new V3(s * 0.1, 0.575, 0.0);
+    const pierna = new THREE.Group(); pierna.position.copy(cadera); g.add(pierna); piernas.push(pierna);
+    const rodilla = (pie ? new V3(s * 0.105, 0.33, -0.01) : new V3(s * 0.11, 0.55, -0.36)).sub(cadera);
+    const tobillo = (pie ? new V3(s * 0.11, 0.15, 0.0) : new V3(s * 0.11, 0.15, -0.4)).sub(cadera);
+    pierna.add(cilindro(new V3(), rodilla, 0.075, petoM)); pierna.add(cilindro(rodilla, tobillo, 0.062, petoM));
+    const bajo = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.012, 14, 48), petoM); bajo.rotation.x = Math.PI / 2; bajo.position.copy(tobillo); pierna.add(bajo);
+    const bota = new THREE.Group(); bota.position.set(tobillo.x, -cadera.y, tobillo.z - 0.03); pierna.add(bota);
     const suela = new THREE.Mesh(new RoundedBoxGeometry(0.115, 0.026, 0.25, 3, 0.009), suelaM); suela.position.set(0, 0.013, -0.01); bota.add(suela);
     const cana = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.062, 0.12, 40), botaM); cana.position.set(0, 0.09, 0.035); bota.add(cana);
     const puntera = new THREE.Mesh(new THREE.SphereGeometry(0.058, 40, 28), botaM); puntera.scale.set(0.98, 0.72, 1.45); puntera.position.set(0, 0.045, -0.035); bota.add(puntera);
@@ -430,5 +441,5 @@ export function crearPersona() {
   // el logo de la gorra: 7 cm de ancho, en la frente de la corona, mirando a −z
   const logo = crearLogo(0.07 / 17.3, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.08, bevelSegments: 2, curveSegments: 1 });
   logo.position.set(0, 0.243, -0.1); logo.rotation.set(0.42, Math.PI, 0); cabeza.add(logo);   // inclinado como la corona
-  return { grupo: g, cabeza, sonrisa, sonreir, ojos, parpadear, logo, rubor, mejillas };
+  return { grupo: g, cabeza, sonrisa, sonreir, ojos, parpadear, logo, rubor, mejillas, piernas, manos };
 }
