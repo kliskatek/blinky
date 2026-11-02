@@ -127,16 +127,19 @@ export default {
       return (t) => geo.setDrawRange(0, Math.floor(n * ease(seg(t, t0, t1)) / 6) * 6);
     };
     const tubos = [tubo(RECT, T.rect, base.ease[2]), tubo(CANALES, T.canales, base.ease[3]), tubo(DIGITAL, T.digital, base.ease[4]), tubo(MEMORIA, T.memoria, base.ease[5]), tubo(SALIDA, T.salida, base.ease[6])];
-    const zona = (u0, v0, u1, v1, color) => {
+    // (los azules, tapando en vez de sumando: sumados a la foto dorada del die salían rosas)
+    const zona = (u0, v0, u1, v1, color, tapa = false) => {
       const m = new THREE.Mesh(new THREE.PlaneGeometry((u1 - u0) * QFN.dw, (v1 - v0) * QFN.dh),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: tapa ? THREE.NormalBlending : THREE.AdditiveBlending, depthWrite: false, toneMapped: !tapa }));
       m.rotation.x = -Math.PI / 2; m.position.copy(padEn((u0 + u1) / 2, (v0 + v1) / 2, 0.004)); grupo.add(m); return m;
     };
     const rectificador = zona(0.17, 0.44, 0.31, 0.62, 0xff8a2a);
     const digital = zona(0.612, 0.2, 0.735, 0.775, 0x3d9bff);
-    // las que nombra por el camino: el condensador (se llena de abajo arriba), el regulador y la memoria
-    const condensador = zona(0.29, 0.66, 0.39, 0.80, 0xffc04a);
-    const regulador = zona(0.43, 0.66, 0.58, 0.79, 0x4fe39a);
+    // las que nombra por el camino: el condensador (se llena de abajo arriba), el regulador y la memoria. Con los colores
+    // de la serie (corto/LENGUAJE.md): la energía guardada, en el azul claro del depósito; el control de la energía, en
+    // el azul del monitor (el turquesa es de BLE)
+    const condensador = zona(0.29, 0.66, 0.39, 0.80, 0x5fb4ff, true);
+    const regulador = zona(0.43, 0.66, 0.58, 0.79, 0x3d9bff, true);
     const memoria = zona(0.738, 0.185, 0.905, 0.80, 0xffb15a);             // la de fuera, junto a los pads
     const vCond = padEn(0.34, 0.80, 0.004).z, altoCond = 0.14 * QFN.dh;
     // la lógica trabajando mientras pasa: celdas que parpadean, cada una a su ritmo
@@ -186,8 +189,8 @@ export default {
         rectificador.material.opacity = 0.32 * carga;
         const llena = smooth(seg(t, 5.0, 6.6));
         condensador.scale.y = Math.max(0.001, llena); condensador.position.z = vCond - altoCond * llena / 2;
-        condensador.material.opacity = 0.4 * llena * (1 - smooth(seg(t, 9.0, 10.0)));
-        regulador.material.opacity = 0.3 * bell(t, 6.4, 8.8) * (0.8 + 0.2 * Math.sin(t * 9));
+        condensador.material.opacity = 0.6 * llena * (1 - smooth(seg(t, 9.0, 10.0)));
+        regulador.material.opacity = 0.45 * bell(t, 6.4, 8.8) * (0.8 + 0.2 * Math.sin(t * 9));
         memoria.material.opacity = 0.32 * bell(t, 11.2, 14.4);
         const dentro = smooth(seg(t, 8.0, 8.8)) * (1 - smooth(seg(t, 14.6, 15.6)));
         digital.material.opacity = dentro * (0.1 + 0.04 * Math.sin(t * 7));   // (más, con él dentro, quemaba la foto del die)

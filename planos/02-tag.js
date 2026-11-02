@@ -112,7 +112,7 @@ export default {
     const fuente = enPlanta(planta.cara), destino = V(0, yPista, zA), haz = destino.clone().sub(fuente);
     const ladoHaz = haz.clone().cross(V(0, 1, 0)).normalize();
     const fotones = Array.from({ length: 28 }, () => {
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaPunto(), color: new THREE.Color(1.6, 1.15, 0.4), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: false }));
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texturaPunto(), color: new THREE.Color(1.6, 1.1, 0.35), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: false }));
       grupo.add(sp); return sp;
     });
     const verFotones = (tReal, t) => {
