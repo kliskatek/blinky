@@ -1,0 +1,290 @@
+[
+{
+"t": 9.9,
+"f": "01.mp3",
+"d": 2.81,
+"x": "Hi! I'm Blinky."
+},
+{
+"t": 11.8,
+"f": "02.mp3",
+"d": 5.16,
+"x": "\"Kliska\" means a blink in Basque. I'm a particle of energy."
+},
+{
+"t": 14.2,
+"f": "03.mp3",
+"d": 6.48,
+"x": "Right now I'm a radio-frequency photon: light you can't see, at about nine hundred megahertz."
+},
+{
+"t": 17.3,
+"f": "04.mp3",
+"d": 5.16,
+"x": "Come with me: I'll show you how Kliskatek technology works!"
+},
+{
+"t": 23.4,
+"f": "05.mp3",
+"d": 6.98,
+"x": "What's going on there? Photons like me are coming out of that antenna. I want to see!"
+},
+{
+"t": 27.9,
+"f": "06.mp3",
+"d": 6.17,
+"x": "It's line three of a factory. That antenna belongs to an RFID reader."
+},
+{
+"t": 31.0,
+"f": "07.mp3",
+"d": 7.54,
+"x": "Inside, an electric motor. And on top, a battery-free RFID sensor."
+},
+{
+"t": 39.25,
+"f": "08.mp3",
+"d": 4.75,
+"x": "Whoa! The tag's antenna turned me into an electron!"
+},
+{
+"t": 42.9,
+"f": "09.mp3",
+"d": 11.64,
+"x": "Look: the wave moves the electrons in the copper. They pile up at the tips, with opposite sign on each arm, and the strongest current flows through the middle, where the chip is."
+},
+{
+"t": 49.9,
+"f": "10.mp3",
+"d": 8.35,
+"x": "And all of this oscillates nine hundred million times a second. That current goes to the chip. Let’s go with it!"
+},
+{
+"t": 55.9,
+"f": "11.mp3",
+"d": 6.0,
+"x": "Those two inductors match the impedances, so the chip gets as much energy as possible."
+},
+{
+"t": 60.05,
+"f": "12.mp3",
+"d": 6.72,
+"x": "The energy goes in here, through the radio-frequency pins! I’m going too!"
+},
+{
+"t": 67.0,
+"f": "13.mp3",
+"d": 5.95,
+"x": "A voltage multiplier! It turns the radio wave into DC voltage."
+},
+{
+"t": 69.6,
+"f": "14.mp3",
+"d": 5.11,
+"x": "And that capacitor fills up: it stores energy so the chip stays on."
+},
+{
+"t": 71.7,
+"f": "15.mp3",
+"d": 4.32,
+"x": "Here, a regulator: steady voltage for the whole chip."
+},
+{
+"t": 75.3,
+"f": "16.mp3",
+"d": 7.37,
+"x": "Look! Digital circuits that speak the RAIN protocol: they understand the reader and prepare the answer."
+},
+{
+"t": 78.7,
+"f": "17.mp3",
+"d": 5.88,
+"x": "And a memory with the EPC: the code that identifies this tag and the machine it’s on."
+},
+{
+"t": 82.4,
+"f": "18.mp3",
+"d": 5.33,
+"x": "But this chip does more: it sends me to the microcontroller over SPI."
+},
+{
+"t": 87.2,
+"f": "19.mp3",
+"d": 7.34,
+"x": "And the microcontroller sends me to the sensor over I²C. Let's get the temperature!"
+},
+{
+"t": 95.3,
+"f": "20.mp3",
+"d": 3.91,
+"x": "What do we have here? A temperature sensor!"
+},
+{
+"t": 98.2,
+"f": "21.mp3",
+"d": 7.01,
+"x": "Its core: transistors whose voltage changes with heat. And here I can feel the machine's!"
+},
+{
+"t": 102.2,
+"f": "22.mp3",
+"d": 3.89,
+"x": "Phew, it's hot! I'm turning red."
+},
+{
+"t": 104.6,
+"f": "23.mp3",
+"d": 7.92,
+"x": "And the converter turns it into a number: forty-one point eight degrees. A little more than usual for this motor…"
+},
+{
+"t": 111.94,
+"f": "24.mp3",
+"d": 10.61,
+"x": "I'm heading back with the temperature the same way: over I²C to the microcontroller and over SPI to the chip, which keeps it to answer the reader."
+},
+{
+"t": 127.74,
+"f": "25.mp3",
+"d": 5.06,
+"x": "All without a battery: just the energy that arrives through the air."
+},
+{
+"t": 133.14,
+"f": "26.mp3",
+"d": 5.04,
+"x": "Whoa! The digital part is modulating the chip's impedance…"
+},
+{
+"t": 136.34,
+"f": "27.mp3",
+"d": 7.7,
+"x": "…and part of the energy bounces back from the mismatch. That's backscatter: the tag answers by reflecting."
+},
+{
+"t": 139.64,
+"f": "28.mp3",
+"d": 6.67,
+"x": "My temperature rides on that bounce. A photon again… Let's see where they go!"
+},
+{
+"t": 143.94,
+"f": "29.mp3",
+"d": 5.45,
+"x": "The echo coming back is very faint… but the reader knows how to hear it."
+},
+{
+"t": 155.04,
+"f": "30.mp3",
+"d": 5.95,
+"x": "An electron again… I know this one! It's the reader's antenna."
+},
+{
+"t": 158.94,
+"f": "31.mp3",
+"d": 4.7,
+"x": "Down the coaxial cable to the reader, in the electrical cabinet."
+},
+{
+"t": 163.84,
+"f": "32.mp3",
+"d": 4.15,
+"x": "This looks like a RAIN reader: UHF RFID…"
+},
+{
+"t": 166.14,
+"f": "33.mp3",
+"d": 9.6,
+"x": "Oh! I’ve been detected here: they’ve read my EPC and my temperature. And it’s sent over industrial Ethernet to the PLC."
+},
+{
+"t": 171.94,
+"f": "34.mp3",
+"d": 3.34,
+"x": "The other sensors are sending their data too."
+},
+{
+"t": 175.44,
+"f": "35.mp3",
+"d": 6.26,
+"x": "A PLC! The brain of the machine: it reads its sensors and controls it."
+},
+{
+"t": 178.54,
+"f": "36.mp3",
+"d": 6.14,
+"x": "Look! My temperature is on its screen, with the pressure, presence and level."
+},
+{
+"t": 181.44,
+"f": "37.mp3",
+"d": 3.79,
+"x": "And now I'm travelling with more data, to the edge!"
+},
+{
+"t": 184.94,
+"f": "38.mp3",
+"d": 4.73,
+"x": "Into the edge: the bridge between the machine and the company network."
+},
+{
+"t": 188.89,
+"f": "39.mp3",
+"d": 3.26,
+"x": "What's this? A piece of data?…"
+},
+{
+"t": 191.09,
+"f": "40.mp3",
+"d": 10.13,
+"x": "The edge has given me a name and a timestamp, packed me with the PLC’s data and turned me into an MQTT message. I’ve never had this shape!"
+},
+{
+"t": 195.84,
+"f": "41.mp3",
+"d": 6.05,
+"x": "This is the MES, the plant software: it watches the line and manages production."
+},
+{
+"t": 200.84,
+"f": "42.mp3",
+"d": 5.64,
+"x": "They group us with earlier readings and take the average: forty point five degrees."
+},
+{
+"t": 203.64,
+"f": "43.mp3",
+"d": 7.56,
+"x": "Then a filter: only what's more than one degree above the average gets through, forty-one point five… and I do!"
+},
+{
+"t": 207.04,
+"f": "44.mp3",
+"d": 4.01,
+"x": "Now I'm an alert! I really like this."
+},
+{
+"t": 211.34,
+"f": "45.mp3",
+"d": 8.14,
+"x": "And now, to the ERP. Readings don’t go there, only what must be done about them: I’ll be a maintenance notice."
+},
+{
+"t": 219.84,
+"f": "46.mp3",
+"d": 4.51,
+"x": "Here I am! I'm the alert on the operator's screen."
+},
+{
+"t": 222.64,
+"f": "47.mp3",
+"d": 8.35,
+"x": "The operator has seen me… and the ERP has already asked for the motor to be checked, before it breaks down and stops the line."
+},
+{
+"t": 231.04,
+"f": "48.mp3",
+"d": 5.28,
+"x": "From tag to maintenance notice: that's how Kliskatek technology works."
+}
+]
