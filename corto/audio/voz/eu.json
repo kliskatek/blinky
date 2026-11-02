@@ -6,285 +6,291 @@
 "x": "Kaixo! Blinky naiz."
 },
 {
-"t": 3.9,
+"t": 3.4,
 "f": "02.mp3",
 "d": 6.19,
 "x": "Nire izena «kliska» hitzetik dator: begi-kliska bat. Energia-partikula bat naiz."
 },
 {
-"t": 6.3,
+"t": 6.0,
 "f": "03.mp3",
 "d": 7.08,
 "x": "Orain irrati-maiztasuneko fotoi bat naiz: ikusten ez den argia, bederatziehun megahertz ingurukoa."
 },
 {
-"t": 9.4,
+"t": 8.4,
 "f": "04.mp3",
-"d": 5.95,
-"x": "Zatozte nirekin: Kliskatek teknologiak nola funtzionatzen duen erakutsiko dizuet!"
+"d": 8.4,
+"x": "Motor bat berotzen da eta inork ez du ikusten… lerroa gelditu arte. Eta berak abisatuko balu, kablerik eta pilarik gabe?"
+},
+{
+"t": 10.8,
+"f": "05.mp3",
+"d": 5.78,
+"x": "Zatozte nirekin: Kliskatek teknologiak nola konpontzen duen erakutsiko dizuet!"
 },
 {
 "t": 15.5,
-"f": "05.mp3",
+"f": "06.mp3",
 "d": 7.82,
 "x": "Zer gertatzen da hor? Antena horretatik ni bezalako fotoiak ateratzen dira. Ikustera joan nahi dut!"
 },
 {
 "t": 20.0,
-"f": "06.mp3",
+"f": "07.mp3",
 "d": 5.78,
 "x": "Lantegi bateko hirugarren lerroa da. Antena hori RFID irakurgailu batena da."
 },
 {
 "t": 23.1,
-"f": "07.mp3",
+"f": "08.mp3",
 "d": 7.61,
 "x": "Barruan, motor elektriko bat. Eta gainean, bateriarik gabeko RFID sentsore bat."
 },
 {
 "t": 31.35,
-"f": "08.mp3",
+"f": "09.mp3",
 "d": 4.2,
 "x": "Hara! Etiketaren antenak elektroi bihurtu nau!"
 },
 {
 "t": 35.0,
-"f": "09.mp3",
+"f": "10.mp3",
 "d": 11.86,
 "x": "Begira: uhinak kobrearen elektroiak mugitzen ditu. Muturretan pilatzen dira, beso bakoitzean kontrako zeinuarekin, eta erdian, txipa dagoen lekuan, korronte handiena dabil."
 },
 {
 "t": 42.0,
-"f": "10.mp3",
+"f": "11.mp3",
 "d": 8.78,
 "x": "Eta hau guztia bederatziehun milioi aldiz oszilatzen da segundoko. Korronte hori txiperantz doa. Goazen harekin!"
 },
 {
 "t": 48.0,
-"f": "11.mp3",
+"f": "12.mp3",
 "d": 6.91,
 "x": "Bi bobina horiek inpedantziak egokitzen dituzte: horrela, txipak ahalik eta energia gehien jasotzen du."
 },
 {
 "t": 52.15,
-"f": "12.mp3",
+"f": "13.mp3",
 "d": 6.72,
 "x": "Energia hemendik sartzen da, irrati-maiztasuneko pinetatik! Ni ere banoa!"
 },
 {
 "t": 59.1,
-"f": "13.mp3",
+"f": "14.mp3",
 "d": 5.33,
 "x": "Tentsio-biderkatzaile bat! Irrati-uhina tentsio jarraitu bihurtzen du."
 },
 {
 "t": 61.7,
-"f": "14.mp3",
+"f": "15.mp3",
 "d": 4.39,
 "x": "Hemen, erregulagailu bat: tentsio egonkorra txip osorako."
 },
 {
 "t": 63.8,
-"f": "15.mp3",
+"f": "16.mp3",
 "d": 6.29,
 "x": "Eta tentsio-monitorea: energia nahikoa dagoenean, etengailua itxi eta txipa pizten du."
 },
 {
 "t": 67.4,
-"f": "16.mp3",
+"f": "17.mp3",
 "d": 9.0,
 "x": "Begira! RAIN protokoloa hitz egiten duten zirkuitu digitalak: irakurgailua ulertzen dute eta erantzuna prestatzen dute."
 },
 {
 "t": 70.8,
-"f": "17.mp3",
+"f": "18.mp3",
 "d": 6.19,
 "x": "Eta EPCa duen memoria bat: etiketa hau eta doan makina identifikatzen dituen kodea."
 },
 {
 "t": 74.5,
-"f": "18.mp3",
+"f": "19.mp3",
 "d": 5.02,
 "x": "Baina txip honek gehiago egiten du: SPI bidez mikrora bidaltzen nau."
 },
 {
 "t": 79.3,
-"f": "19.mp3",
+"f": "20.mp3",
 "d": 6.74,
 "x": "Eta mikroak I²C bidez sentsorera bidaltzen nau. Tenperaturaren bila!"
 },
 {
 "t": 87.4,
-"f": "20.mp3",
+"f": "21.mp3",
 "d": 3.96,
 "x": "Zer dugu hemen? Tenperatura-sentsore bat!"
 },
 {
 "t": 90.3,
-"f": "21.mp3",
+"f": "22.mp3",
 "d": 7.85,
 "x": "Haren nukleoa: beroarekin tentsioa aldatzen duten transistoreak. Eta hemen makinaren beroa sentitzen dut!"
 },
 {
 "t": 94.3,
-"f": "22.mp3",
+"f": "23.mp3",
 "d": 4.08,
 "x": "Uf, a ze beroa! Gorritzen ari naiz."
 },
 {
 "t": 96.7,
-"f": "23.mp3",
+"f": "24.mp3",
 "d": 8.06,
 "x": "Eta bihurgailuak zenbaki bihurtzen du: berrogeita bat koma zortzi gradu. Motor honetan ohi baino zertxobait gehiago…"
 },
 {
 "t": 104.04,
-"f": "24.mp3",
+"f": "25.mp3",
 "d": 11.59,
 "x": "Tenperaturarekin itzultzen naiz bide beretik: I²C bidez mikrora eta SPI bidez txipera, eta txipak gorde egiten du irakurgailuari erantzuteko."
 },
 {
 "t": 119.84,
-"f": "25.mp3",
+"f": "26.mp3",
 "d": 5.28,
 "x": "Eta dena, bateriarik gabe: airetik iristen den energiarekin bakarrik."
 },
 {
 "t": 125.24,
-"f": "26.mp3",
+"f": "27.mp3",
 "d": 5.06,
 "x": "Hara! Zati digitala txiparen inpedantzia modulatzen ari da…"
 },
 {
 "t": 128.44,
-"f": "27.mp3",
+"f": "28.mp3",
 "d": 9.02,
 "x": "…eta energiaren zati bat errebotatu egiten da desegokitzapenagatik. Hori da backscatterra: etiketak islatuz erantzuten du."
 },
 {
 "t": 131.74,
-"f": "28.mp3",
+"f": "29.mp3",
 "d": 6.94,
 "x": "Errebote horretan doa nire tenperatura. Fotoi berriz… Ikus dezagun nora doazen!"
 },
 {
 "t": 136.04,
-"f": "29.mp3",
+"f": "30.mp3",
 "d": 5.88,
 "x": "Itzultzen den oihartzuna oso ahula da… baina irakurgailuak badaki entzuten."
 },
 {
 "t": 147.14,
-"f": "30.mp3",
+"f": "31.mp3",
 "d": 4.8,
 "x": "Elektroi berriz… hau badakit! Irakurgailuaren antena da."
 },
 {
 "t": 151.04,
-"f": "31.mp3",
+"f": "32.mp3",
 "d": 4.85,
 "x": "Kable koaxialetik behera, irakurgailuraino, armairu elektrikoan."
 },
 {
 "t": 155.94,
-"f": "32.mp3",
+"f": "33.mp3",
 "d": 4.92,
 "x": "Honek RAIN irakurgailu bat dirudi, UHF RFIDa…"
 },
 {
 "t": 158.24,
-"f": "33.mp3",
+"f": "34.mp3",
 "d": 10.13,
 "x": "Hara! Hemen detektatu naute: nire EPCa eta tenperatura irakurri dituzte. Eta Ethernet industrialetik bidaltzen dute PLCra."
 },
 {
 "t": 164.04,
-"f": "34.mp3",
+"f": "35.mp3",
 "d": 3.89,
 "x": "Beste sentsoreek ere beren datuak bidaltzen dituzte."
 },
 {
 "t": 167.54,
-"f": "35.mp3",
+"f": "36.mp3",
 "d": 6.5,
 "x": "PLC bat! Makinaren garuna: sentsoreak irakurri eta makina kontrolatzen du."
 },
 {
 "t": 170.64,
-"f": "36.mp3",
+"f": "37.mp3",
 "d": 7.15,
 "x": "Begira! Bere pantailan dago nire tenperatura, presioarekin, presentziarekin eta mailarekin."
 },
 {
 "t": 173.54,
-"f": "37.mp3",
+"f": "38.mp3",
 "d": 3.43,
 "x": "Eta orain datu gehiagorekin noa, edge-erantz!"
 },
 {
 "t": 177.04,
-"f": "38.mp3",
+"f": "39.mp3",
 "d": 5.02,
 "x": "Edge-an sartzen gara: makinaren eta enpresaren sarearen arteko zubia."
 },
 {
 "t": 180.99,
-"f": "39.mp3",
+"f": "40.mp3",
 "d": 2.54,
 "x": "Eta hau? Datu bat?…"
 },
 {
 "t": 183.19,
-"f": "40.mp3",
+"f": "41.mp3",
 "d": 9.96,
 "x": "Edge-ak izena eta ordua jarri dizkit, PLCaren datuekin paketatu nau eta MQTT mezu bihurtu nau. Inoiz ez dut forma hau izan!"
 },
 {
 "t": 187.94,
-"f": "41.mp3",
+"f": "42.mp3",
 "d": 6.19,
 "x": "Hau MESa da, lantegiko softwarea: hemen zaintzen da lerroa eta kudeatzen da ekoizpena."
 },
 {
 "t": 192.94,
-"f": "42.mp3",
+"f": "43.mp3",
 "d": 6.62,
 "x": "Aurreko irakurketekin batzen gaituzte eta batez bestekoa ateratzen dute: berrogei koma bost gradu."
 },
 {
 "t": 195.74,
-"f": "43.mp3",
+"f": "44.mp3",
 "d": 9.65,
 "x": "Gero, iragazki bat: batez bestekoa gradu bat baino gehiagoz gainditzen duena bakarrik pasatzen da, berrogeita bat koma bost… eta ni pasatzen naiz!"
 },
 {
 "t": 199.14,
-"f": "44.mp3",
+"f": "45.mp3",
 "d": 4.32,
 "x": "Orain alerta bat naiz! Hau bai gustatzen zaidala."
 },
 {
 "t": 203.44,
-"f": "45.mp3",
+"f": "46.mp3",
 "d": 8.9,
 "x": "Eta orain, ERPra. Hara ez dira irakurketak iristen, haiekin egin behar dena baizik: mantentze-abisu bat izango naiz."
 },
 {
 "t": 211.94,
-"f": "46.mp3",
+"f": "47.mp3",
 "d": 4.51,
 "x": "Hemen nago! Operadorearen pantailako alerta naiz."
 },
 {
 "t": 214.74,
-"f": "47.mp3",
+"f": "48.mp3",
 "d": 8.21,
 "x": "Operadoreak ikusi nau… eta ERPak motorra berrikusteko eskatu du jada, matxuratu eta lerroa geldiarazi aurretik."
 },
 {
 "t": 223.14,
-"f": "48.mp3",
-"d": 5.59,
-"x": "Etiketatik mantentze-abisura: horrela funtzionatzen du Kliskatek teknologiak."
+"f": "49.mp3",
+"d": 5.11,
+"x": "Etiketatik mantentze-abisura: zaila erraz egiten dugu, kliska batean!"
 }
 ]

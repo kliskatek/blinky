@@ -6,285 +6,291 @@
 "x": "¡Hola! Soy Blinky."
 },
 {
-"t": 3.9,
+"t": 3.4,
 "f": "02.mp3",
 "d": 8.45,
 "x": "«Kliska», en euskera, es un parpadeo; en inglés, «blink». ¡De ahí mi nombre! Soy una partícula de energía."
 },
 {
-"t": 6.3,
+"t": 6.0,
 "f": "03.mp3",
 "d": 5.4,
 "x": "Ahora soy un fotón de radiofrecuencia: luz que no se ve, a unos novecientos megahercios."
 },
 {
-"t": 9.4,
+"t": 8.4,
 "f": "04.mp3",
-"d": 4.73,
-"x": "¡Venid conmigo: os enseño cómo funciona la tecnología Kliskatek!"
+"d": 7.1,
+"x": "Un motor se calienta y nadie lo ve… hasta que se para la línea. ¿Y si avisara él mismo, sin cables ni pilas?"
+},
+{
+"t": 10.8,
+"f": "05.mp3",
+"d": 4.42,
+"x": "¡Venid conmigo: os enseño cómo lo resuelve la tecnología Kliskatek!"
 },
 {
 "t": 15.5,
-"f": "05.mp3",
+"f": "06.mp3",
 "d": 6.07,
 "x": "¿Qué pasa ahí? De esa antena salen fotones como yo. ¡Quiero ir a ver!"
 },
 {
 "t": 20.0,
-"f": "06.mp3",
+"f": "07.mp3",
 "d": 5.5,
 "x": "Es la línea tres de una fábrica. Esa antena es de un lector RFID."
 },
 {
 "t": 23.1,
-"f": "07.mp3",
+"f": "08.mp3",
 "d": 6.36,
 "x": "Dentro, un motor eléctrico. Y encima, un sensor RFID sin batería."
 },
 {
 "t": 31.35,
-"f": "08.mp3",
+"f": "09.mp3",
 "d": 4.51,
 "x": "¡Vaya! ¡La antena del tag me ha convertido en electrón!"
 },
 {
 "t": 35.0,
-"f": "09.mp3",
+"f": "10.mp3",
 "d": 10.9,
 "x": "Mira: la onda mueve los electrones del cobre. Se amontonan en las puntas, con signo contrario en cada brazo, y por el centro, donde está el chip, pasa la corriente más fuerte."
 },
 {
 "t": 42.0,
-"f": "10.mp3",
+"f": "11.mp3",
 "d": 7.66,
 "x": "Y todo esto oscila novecientos millones de veces por segundo. Esa corriente va al chip. ¡Vamos con ella!"
 },
 {
 "t": 48.0,
-"f": "11.mp3",
+"f": "12.mp3",
 "d": 5.54,
 "x": "Esas dos bobinas adaptan las impedancias: así el chip recibe toda la energía posible."
 },
 {
 "t": 52.15,
-"f": "12.mp3",
+"f": "13.mp3",
 "d": 6.02,
 "x": "¡La energía entra por aquí, por las patas de radiofrecuencia! ¡Yo también voy!"
 },
 {
 "t": 59.1,
-"f": "13.mp3",
+"f": "14.mp3",
 "d": 5.52,
 "x": "¡Un multiplicador de tensión! Convierte la onda de radio en tensión continua."
 },
 {
 "t": 61.7,
-"f": "14.mp3",
+"f": "15.mp3",
 "d": 3.84,
 "x": "Aquí, un regulador: tensión estable para todo el chip."
 },
 {
 "t": 63.8,
-"f": "15.mp3",
+"f": "16.mp3",
 "d": 5.35,
 "x": "Y el monitor de tensión: con energía de sobra, cierra el interruptor y enciende el chip."
 },
 {
 "t": 67.4,
-"f": "16.mp3",
+"f": "17.mp3",
 "d": 6.84,
 "x": "¡Mira! Circuitos digitales que hablan el protocolo RAIN: entienden al lector y preparan la respuesta."
 },
 {
 "t": 70.8,
-"f": "17.mp3",
+"f": "18.mp3",
 "d": 5.33,
 "x": "Y una memoria con el EPC: el código que identifica a este tag y a la máquina en la que va."
 },
 {
 "t": 74.5,
-"f": "18.mp3",
+"f": "19.mp3",
 "d": 4.03,
 "x": "Pero este chip hace más: me manda por SPI al micro."
 },
 {
 "t": 79.3,
-"f": "19.mp3",
+"f": "20.mp3",
 "d": 5.59,
 "x": "Y el micro me manda por I²C al sensor. ¡A por la temperatura!"
 },
 {
 "t": 87.4,
-"f": "20.mp3",
+"f": "21.mp3",
 "d": 3.91,
 "x": "¿Qué tenemos aquí? ¡Un sensor de temperatura!"
 },
 {
 "t": 90.3,
-"f": "21.mp3",
+"f": "22.mp3",
 "d": 6.26,
 "x": "Su núcleo: transistores cuya tensión cambia con el calor. ¡Y aquí siento el de la máquina!"
 },
 {
 "t": 94.3,
-"f": "22.mp3",
+"f": "23.mp3",
 "d": 4.06,
 "x": "¡Uf, qué calor! Me estoy poniendo rojo."
 },
 {
 "t": 96.7,
-"f": "23.mp3",
+"f": "24.mp3",
 "d": 6.98,
 "x": "Y el convertidor lo pasa a número: cuarenta y uno coma ocho grados. Algo más de lo habitual en este motor…"
 },
 {
 "t": 104.04,
-"f": "24.mp3",
+"f": "25.mp3",
 "d": 8.18,
 "x": "Vuelvo con la temperatura por el mismo camino: por I²C al micro y por SPI al chip, que la guarda para contestar al lector."
 },
 {
 "t": 119.84,
-"f": "25.mp3",
+"f": "26.mp3",
 "d": 4.42,
 "x": "Y todo, sin pilas: solo con la energía que llega por el aire."
 },
 {
 "t": 125.24,
-"f": "26.mp3",
+"f": "27.mp3",
 "d": 4.85,
 "x": "¡Vaya! La parte digital está modulando la impedancia del chip…"
 },
 {
 "t": 128.44,
-"f": "27.mp3",
+"f": "28.mp3",
 "d": 6.5,
 "x": "…y parte de la energía rebota por desadaptación. Es el backscatter: el tag contesta reflejando."
 },
 {
 "t": 131.74,
-"f": "28.mp3",
+"f": "29.mp3",
 "d": 6.17,
 "x": "En ese rebote va mi temperatura. Fotón otra vez… ¡Voy a ver adónde van!"
 },
 {
 "t": 136.04,
-"f": "29.mp3",
+"f": "30.mp3",
 "d": 4.39,
 "x": "El eco que vuelve es muy débil… pero el lector sabe escucharlo."
 },
 {
 "t": 147.14,
-"f": "30.mp3",
+"f": "31.mp3",
 "d": 4.97,
 "x": "Electrón otra vez… ¡esto ya me lo sé! Es la antena del lector."
 },
 {
 "t": 151.04,
-"f": "31.mp3",
+"f": "32.mp3",
 "d": 4.56,
 "x": "Bajo por el cable coaxial hasta el lector, en el armario eléctrico."
 },
 {
 "t": 155.94,
-"f": "32.mp3",
+"f": "33.mp3",
 "d": 4.03,
 "x": "Esto parece un lector RAIN, la RFID de UHF…"
 },
 {
 "t": 158.24,
-"f": "33.mp3",
+"f": "34.mp3",
 "d": 8.3,
 "x": "¡Anda! Aquí me han detectado: han leído mi EPC y mi temperatura. Y lo mandan por Ethernet industrial al PLC."
 },
 {
 "t": 164.04,
-"f": "34.mp3",
+"f": "35.mp3",
 "d": 3.24,
 "x": "Los otros sensores también mandan sus datos."
 },
 {
 "t": 167.54,
-"f": "35.mp3",
+"f": "36.mp3",
 "d": 5.5,
 "x": "¡Un PLC! El cerebro de la máquina: lee sus sensores y la controla."
 },
 {
 "t": 170.64,
-"f": "36.mp3",
+"f": "37.mp3",
 "d": 6.12,
 "x": "¡Mira! En su pantalla está mi temperatura, con la presión, la presencia y el nivel."
 },
 {
 "t": 173.54,
-"f": "37.mp3",
+"f": "38.mp3",
 "d": 3.29,
 "x": "¡Y ahora viajo con más datos, hacia el edge!"
 },
 {
 "t": 177.04,
-"f": "38.mp3",
+"f": "39.mp3",
 "d": 4.2,
 "x": "Entramos en el edge: el puente entre la máquina y la red de la empresa."
 },
 {
 "t": 180.99,
-"f": "39.mp3",
+"f": "40.mp3",
 "d": 2.76,
 "x": "¿Y esto? ¿Un dato?…"
 },
 {
 "t": 183.19,
-"f": "40.mp3",
+"f": "41.mp3",
 "d": 9.24,
 "x": "El edge me ha puesto nombre y hora, me ha empaquetado con los datos del PLC y me ha convertido en un mensaje MQTT. ¡Nunca había tenido esta forma!"
 },
 {
 "t": 187.94,
-"f": "41.mp3",
+"f": "42.mp3",
 "d": 5.52,
 "x": "Esto es el MES, el software de planta: aquí se vigila la línea y se gestiona la producción."
 },
 {
 "t": 192.94,
-"f": "42.mp3",
+"f": "43.mp3",
 "d": 5.02,
 "x": "Nos juntan con lecturas anteriores y sacan la media: cuarenta coma cinco grados."
 },
 {
 "t": 195.74,
-"f": "43.mp3",
+"f": "44.mp3",
 "d": 6.53,
 "x": "Luego, un filtro: solo pasa lo que supera la media en más de un grado, cuarenta y uno coma cinco… ¡y yo paso!"
 },
 {
 "t": 199.14,
-"f": "44.mp3",
+"f": "45.mp3",
 "d": 4.08,
 "x": "¡Ahora soy una alerta! Esto sí que me gusta."
 },
 {
 "t": 203.44,
-"f": "45.mp3",
+"f": "46.mp3",
 "d": 8.04,
 "x": "Y ahora, al ERP. Allí no llegan lecturas, sino lo que hay que hacer con ellas: seré un aviso de mantenimiento."
 },
 {
 "t": 211.94,
-"f": "46.mp3",
+"f": "47.mp3",
 "d": 4.39,
 "x": "¡Aquí estoy! Soy la alerta de la pantalla del operario."
 },
 {
 "t": 214.74,
-"f": "47.mp3",
+"f": "48.mp3",
 "d": 6.17,
 "x": "Me ha visto… y el ERP ya ha pedido revisar el motor, antes de que se averíe y pare la línea."
 },
 {
 "t": 223.14,
-"f": "48.mp3",
-"d": 4.73,
-"x": "Del tag al aviso de mantenimiento: así funciona la tecnología Kliskatek."
+"f": "49.mp3",
+"d": 4.94,
+"x": "Del tag al aviso de mantenimiento: ¡hacemos fácil lo difícil, en un parpadeo!"
 }
 ]
