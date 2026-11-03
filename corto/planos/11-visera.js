@@ -18,7 +18,7 @@ import { LOGO_C, ESQUINA } from '../piezas/logo.js';
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const DURA = 4.4;
 const LLEGA = 1.9, METE = 2.5;                                    // cuándo llega a la k y cuándo se mete en ella
-const LINEAS = [[0.6, METE, '¡Hacemos fácil lo difícil, en un parpadeo!']];   // (el lema de la serie)
+const LINEAS = [[0.6, METE, '¡Kliskatek hace fácil lo difícil, en un parpadeo!']];   // (el lema de la serie)
 const TAM = 0.55;                                                  // Blinky, del tamaño de la k de la gorra
 
 export default {

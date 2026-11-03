@@ -173,9 +173,21 @@ function ajustarEntorno(r) {
 // Para que las sombras no cambien al moverse la cámara: la distancia a lo del centro (que salta cuando el rayo pasa de
 // una cosa a otra) se sigue con suavidad, en escala logarítmica (τ = 0,5 s de la película; al cambiar de plano o al
 // saltar en el tiempo, de golpe), y el centro de la cámara de sombra se ajusta a la rejilla de sus texels: si se
-// desliza entre dos, los bordes de las sombras tiemblan
+// desliza entre dos, los bordes de las sombras tiemblan. El tamaño de la cámara de sombra va por escalones (de √2 en
+// √2) y solo cambia cuando lo que se ve ya no cabe o cabe de sobra: si siguiera la distancia en cada cuadro, cambiarían
+// los texels, la rejilla y lo que entra en la sombra, y las sombras irían apareciendo y desapareciendo aunque la escena
+// estuviera quieta (bastaba con que pasara una caja por el centro). Y la cámara de sombra mira desde lejos (20 veces su
+// tamaño) y llega igual de lejos detrás: lo alto o lo lejano que echa sombra no entra y sale de ella.
+// Con la distancia a lo del centro (y a Blinky) se abre también el plano cercano de la cámara: los planos que ven la
+// planta de lejos van de 0,02 a 8000, y con tanto rango la profundidad no distingue un cartel de la pared en la que
+// está pegado (se pelean, y a ratos gana la pared: el cartel parpadea)
 const rayo = new THREE.Raycaster(), adelante = new THREE.Vector3(), foco = new THREE.Vector3();
 const haciaSol = new THREE.Vector3(), ejeX = new THREE.Vector3(), ejeY = new THREE.Vector3(), ARRIBA = new THREE.Vector3(0, 1, 0);
+// en el vídeo, el sol tiene tamaño: en cada submuestra del cuadro (penumbra: su desvío, de −0,5 a 0,5) llega desde un punto
+// algo distinto de un disco de SOL_R radianes, y al promediarlas los bordes de las sombras salen suaves, más cuanto más
+// lejos está lo que la echa (sin coste: las submuestras ya están, por el desenfoque de movimiento)
+const SOL_R = 0.012, luz = new THREE.Vector3(), lado1 = new THREE.Vector3(), lado2 = new THREE.Vector3();
+let penumbra = null;
 function ajustarSombra(r) {
   const sol = r.sol; if (!sol) return;
   cam.getWorldDirection(adelante);
@@ -185,7 +197,11 @@ function ajustarSombra(r) {
   const dt = t - r.sombraT; r.sombraT = t;
   if (!r.sombraD || !(dt >= 0 && dt < 0.25)) r.sombraD = d0;   // (cada plano lleva la suya: al volver a él, dt es grande)
   else r.sombraD *= Math.pow(d0 / r.sombraD, 1 - Math.exp(-dt / 0.5));
-  const d = r.sombraD, R = d * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * Math.max(1, cam.aspect) * 1.4;
+  const d = r.sombraD, Rv = d * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * Math.max(1, cam.aspect) * 1.4;
+  if (!r.sombraR || !(dt >= 0 && dt < 0.25) || Rv > r.sombraR || Rv < r.sombraR / 2.3) r.sombraR = Math.SQRT2 ** Math.ceil(Math.log(Rv * 1.25) / Math.log(Math.SQRT2));
+  const R = r.sombraR;
+  const cerca = Math.min(d, electron.raiz.visible ? electron.raiz.position.distanceTo(cam.position) : Infinity);
+  cam.near = Math.max(cam.near, Math.min(0.02 * cerca, cam.far / 1000));
   foco.copy(cam.position).addScaledVector(adelante, d);
   // a la rejilla de texels, en los ejes de la cámara de sombra (la mira lookAt desde el sol, con y hacia arriba)
   haciaSol.copy(r.haciaSol).transformDirection(r.grupo.matrixWorld);
@@ -193,9 +209,11 @@ function ajustarSombra(r) {
   const texel = 2 * R / sol.shadow.mapSize.x, px = foco.dot(ejeX), py = foco.dot(ejeY);
   foco.addScaledVector(ejeX, Math.round(px / texel) * texel - px).addScaledVector(ejeY, Math.round(py / texel) * texel - py);
   r.grupo.worldToLocal(foco);
-  sol.target.position.copy(foco); sol.position.copy(foco).addScaledVector(r.haciaSol, 4 * R);
-  const c = sol.shadow.camera; c.left = c.bottom = -R; c.right = c.top = R; c.far = 8 * R; c.updateProjectionMatrix();
-  sol.shadow.bias = -0.0003; sol.shadow.normalBias = 0.003 * R;
+  luz.copy(r.haciaSol);
+  if (penumbra) { lado1.crossVectors(ARRIBA, luz).normalize(); lado2.crossVectors(luz, lado1); luz.addScaledVector(lado1, 2 * SOL_R * penumbra[0]).addScaledVector(lado2, 2 * SOL_R * penumbra[1]).normalize(); }
+  sol.target.position.copy(foco); sol.position.copy(foco).addScaledVector(luz, 20 * R);
+  const c = sol.shadow.camera; c.left = c.bottom = -R; c.right = c.top = R; c.far = 40 * R; c.updateProjectionMatrix();
+  sol.shadow.bias = -0.00006; sol.shadow.normalBias = 0.003 * R;
 }
 
 // ------------------------------------------------------------------ reloj y mando
@@ -281,7 +299,7 @@ function calidadVideo(ancho, alto, k) {
   ren.setPixelRatio(1); ren.setSize(ancho * k, alto * k, false);
   comp.setPixelRatio(1); comp.setSize(ancho * k, alto * k); cam.aspect = ancho / alto;
   medirLineas(ancho * k, alto * k);
-  ao.updateGtaoMaterial({ samples: 32 }); ao.updatePdMaterial({ samples: 32, rings: 4 });
+  ao.updateGtaoMaterial({ samples: 16 }); ao.updatePdMaterial({ samples: 16, rings: 2 });   // (con 32 y 4, en Direct3D la GPU se caía)
   sombras(4096);
   comp.renderToScreen = false;
   const acum = new THREE.WebGLRenderTarget(ancho, alto, { type: THREE.FloatType, depthBuffer: false });
@@ -314,12 +332,13 @@ function calidadVideo(ancho, alto, k) {
       const u = sub > 1 ? (i + 0.5) / sub - 0.5 : 0;
       t = Math.min(p.desde + p.dura - 0.0005, Math.max(p.desde, T(s + u * obturador / fps)));   // (sin pasar al plano de al lado)
       desvio = sub > 1 ? [halton(i + 1, 2) - 0.5, halton(i + 1, 3) - 0.5] : null;
+      penumbra = sub > 1 ? [halton(i + 1, 5) - 0.5, halton(i + 1, 7) - 0.5] : null;
       pintar();
       ren.setRenderTarget(acum); ren.autoClear = false;
       suma.material.uniforms.tex.value = comp.readBuffer.texture; suma.material.uniforms.peso.value = 1 / sub;
       suma.render(ren); ren.autoClear = true;
     }
-    t = tc; desvio = null;
+    t = tc; desvio = null; penumbra = null;
     ren.setRenderTarget(null); ren.setViewport(0, 0, ancho, alto); copia.render(ren);
   };
   const acabar = () => {

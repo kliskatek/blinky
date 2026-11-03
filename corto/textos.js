@@ -98,7 +98,7 @@ export default {
     en: 'The operator has seen me… and the ERP has already ordered a motor check.',
     eu: 'Operadoreak ikusi nau… eta ERPak motorra berrikusteko eskatu du jada.',
     zh: '操作员看到我了……ERP 已经安排检修电机。' },
-  '¡Hacemos fácil lo difícil, en un parpadeo!': { en: 'We make the difficult easy, in the blink of an eye!', eu: 'Zaila erraz egiten dugu, kliska batean!', zh: '我们让难题变简单，一眨眼就搞定！' },
+  '¡Kliskatek hace fácil lo difícil, en un parpadeo!': { en: 'Kliskatek makes the difficult easy, in the blink of an eye!', eu: 'Kliskatekek zaila erraz egiten du, kliska batean!', zh: 'Kliskatek 让难题变简单，一眨眼就搞定！' },
 
   // la planta
   'MÁQUINA 1': { en: 'MACHINE 1', eu: '1. MAKINA', zh: '1号机' },
