@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Blinky presenta: Kliskatek</title>
+<!-- para compartirlo: la tarjeta en redes (publicado en https://kliskatek.github.io/blinky/) -->
+<meta name="description" content="Blinky, una partícula de energía, viaja de la antena de un lector RFID al ERP: así funciona la tecnología Kliskatek.">
+<meta property="og:type" content="video.other">
+<meta property="og:title" content="Blinky presenta: Kliskatek">
+<meta property="og:description" content="Blinky, una partícula de energía, viaja de la antena de un lector RFID al ERP: así funciona la tecnología Kliskatek. En español, inglés, euskera y chino.">
+<meta property="og:url" content="https://kliskatek.github.io/blinky/">
+<meta property="og:image" content="https://kliskatek.github.io/blinky/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root { --fondo: #07090d; --tinta: #e8edf2; --suave: #8a96a3; --azul: #0080ff; --naranja: #ff8000; }
+  html, body { margin: 0; height: 100%; background: var(--fondo); color: var(--tinta);
+    font: 14px/1.4 Oxanium, "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  #lienzo { position: fixed; inset: 0; }
+  #lienzo canvas { display: block; width: 100%; height: 100%; }
+  /* controles de revisión: se esconden solos mientras se reproduce y vuelven con el ratón */
+  #mando { position: fixed; left: 16px; right: 16px; bottom: 14px; display: grid; gap: 8px;
+    transition: opacity .4s; }
+  body.quieto #mando, #mando:hover, #mando:focus-within { opacity: 1; }
+  body:not(.quieto) #mando { opacity: 0; }
+  #fila { display: flex; align-items: center; gap: 12px; }
+  #mando button { background: rgba(255,255,255,.08); color: var(--tinta); border: 1px solid rgba(255,255,255,.18);
+    border-radius: 6px; padding: 5px 12px; font: inherit; cursor: pointer; }
+  #mando button:hover { border-color: var(--azul); }
+  #barra { flex: 1; accent-color: var(--azul); }
+  #reloj { font-variant-numeric: tabular-nums; color: var(--suave); min-width: 92px; text-align: right; }
+  #planos { display: flex; gap: 6px; flex-wrap: wrap; }
+  #planos button { font-size: 12px; padding: 3px 9px; }
+  #planos button.activo { border-color: var(--naranja); color: #fff; }
+  /* lo que dice Blinky, en subtítulos: cuando no se oye (en silencio, o hasta que el navegador deja sonar el audio) */
+  #subtitulo { position: fixed; left: 50%; bottom: 9vh; transform: translateX(-50%); display: none; max-width: min(900px, 86vw);
+    padding: 7px 16px 9px; background: rgba(7,9,13,.72); color: #fff; border-radius: 8px; text-align: center;
+    pointer-events: none; font: 600 clamp(16px, 1.9vw, 26px)/1.3 Oxanium, "Segoe UI", system-ui, sans-serif;
+    text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+  body.quieto #subtitulo { bottom: 120px; }                 /* (con el mando a la vista, por encima de él) */
+  /* arriba a la derecha: el idioma y el sonido (voz y música, o silencio con subtítulos). Como el mando, se esconde
+     mientras se reproduce */
+  #ajustes { position: fixed; top: 14px; right: 16px; display: flex; gap: 10px; transition: opacity .4s; }
+  body:not(.quieto) #ajustes { opacity: 0; }
+  #ajustes:hover, #ajustes:focus-within { opacity: 1 !important; }
+  .grupo { display: flex; border: 1px solid rgba(255,255,255,.18); border-radius: 7px; overflow: hidden; }
+  .grupo button { background: rgba(7,9,13,.55); color: var(--suave); border: 0; padding: 5px 11px; font: inherit;
+    font-size: 13px; cursor: pointer; }
+  .grupo button + button { border-left: 1px solid rgba(255,255,255,.12); }
+  .grupo button:hover { color: var(--tinta); }
+  .grupo button.activo { background: rgba(0,128,255,.32); color: #fff; }
+  #aviso { position: fixed; top: 52px; right: 16px; color: var(--suave); font-size: 12px; display: none; }
+  /* arranca solo y en silencio, con subtítulos, como un vídeo en redes: un botón para activar el sonido (el navegador no
+     deja sonar nada sin un toque) y, al principio, el título, que se desvanece */
+  #activar { position: fixed; left: 50%; top: 18px; transform: translateX(-50%); font: inherit; font-size: clamp(15px, 1.6vw, 19px);
+    padding: 9px 18px; border-radius: 999px; cursor: pointer; color: #fff; background: rgba(0,128,255,.85); border: 0;
+    box-shadow: 0 4px 18px rgba(0,0,0,.4); }
+  #activar[hidden] { display: none; }
+  #cartela { position: fixed; left: 0; right: 0; top: 30%; text-align: center; pointer-events: none;
+    animation: cartela 5.5s ease forwards; }
+  #cartela h1 { margin: 0; font-size: clamp(32px, 5vw, 60px); font-weight: 600; letter-spacing: .02em; line-height: 1.05;
+    text-shadow: 0 2px 18px rgba(0,0,0,.7); }
+  #cartela h1 small { display: block; font-size: .42em; font-weight: 500; color: var(--naranja); letter-spacing: .12em; }
+  @keyframes cartela { 0%, 65% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+  #activar:focus-visible, #mando button:focus-visible, .grupo button:focus-visible { outline: 2px solid var(--naranja); outline-offset: 2px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+</head>
+<body class="quieto">
+<div id="lienzo"></div>
+<div id="subtitulo"></div>
+<div id="ajustes"><div class="grupo" id="idiomas"></div><div class="grupo"><button id="sonido"></button></div></div>
+<div id="aviso" aria-live="polite"></div>
+<div id="cartela"><h1 id="titulo"></h1></div>
+<button id="activar" hidden></button>
+<div id="mando">
+  <div id="planos"></div>
+  <div id="fila">
+    <button id="play" title="Espacio">▶</button>
+    <input id="barra" type="range" min="0" max="1" step="0.01" value="0" aria-label="Tiempo">
+    <span id="reloj">0.0 s</span>
+  </div>
+</div>
+<script type="module" src="corto.js"></script>
+</body>
+</html>
